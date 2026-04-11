@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- ① PWA — makes "Add to Home Screen" work as fullscreen app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Prep Pars">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231B4332'/><text y='.9em' font-size='60' x='50%' text-anchor='middle'>🌿</text></svg>">
+
+<title>FOH Prep Pars — Lazy Acres #1827</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --brand:    #1B4332;
+  --accent:   #FF9500;
+  --bg:       #F2F2F7;
+  --card:     #FFFFFF;
+  --sep:      rgba(60,60,67,0.12);
+  --label:    #000000;
+  --label2:   rgba(60,60,67,0.60);
+  --label3:   rgba(60,60,67,0.30);
+  --blue:     #007AFF;
+  --green:    #34C759;
+  --orange:   #FF9500;
+  --red:      #FF3B30;
+  --purple:   #5856D6;
+  --gray:     #8E8E93;
+  --radius:   12px;
+  /* safe area for PWA / notch phones */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--label);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Nav Bar ── */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(242,242,247,0.88);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 0.5px solid var(--sep);
+  padding: 12px 16px 0;
+  /* push down under status bar when running as PWA */
+  padding-top: calc(12px + var(--safe-top));
+}
+
+.nav-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.nav-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--brand);
+  line-height: 1;
+}
+
+.nav-subtitle {
+  font-size: 12px;
+  color: var(--label2);
+  font-weight: 400;
+  margin-top: 3px;
+  letter-spacing: 0.1px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.nav-text-btn {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: inherit;
+}
+
+.nav-text-btn.danger { color: var(--red); display: none; }
+body.prep-mode .nav-text-btn.danger { display: block; }
+
+.prep-btn {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: var(--brand);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.1px;
+  transition: background 0.2s, transform 0.1s;
+}
+.prep-btn:active { transform: scale(0.96); }
+.prep-btn.active { background: var(--orange); }
+
+/* ── Day Pills ── */
+.day-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 12px;
+}
+.day-scroll::-webkit-scrollbar { display: none; }
+
+.day-pill {
+  flex-shrink: 0;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(60,60,67,0.08);
+  color: var(--label);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.1px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.day-pill.active {
+  background: var(--brand);
+  color: white;
+  font-weight: 600;
+}
+.day-pill:active { opacity: 0.7; }
+
+/* ── Info Strip ── */
+.info-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  color: var(--label2);
+}
+
+.info-chip {
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(0,0,0,0.06);
+  color: var(--label2);
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.prep-chip {
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255,149,0,0.14);
+  color: var(--orange);
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: none;
+}
+body.prep-mode .prep-chip { display: inline-block; }
+
+/* ── Content ── */
+.content {
+  padding: 8px 16px calc(100px + var(--safe-bot));
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Section ── */
+.section { margin-bottom: 28px; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 7px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--label2);
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+}
+
+.section-icon { margin-right: 5px; }
+
+.section-chevron {
+  font-size: 11px;
+  color: var(--label3);
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+.section.collapsed .section-chevron { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 2px 10px rgba(0,0,0,0.04);
+}
+
+/* ── Standard Item Row ── */
+.item-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid rgba(60,60,67,0.12);
+  min-height: 44px;
+  gap: 12px;
+}
+.item-row:last-child { border-bottom: none; }
+
+.item-info { flex: 1; min-width: 0; }
+
+.item-name {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--label);
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-sub {
+  font-size: 11.5px;
+  color: var(--label2);
+  margin-top: 1px;
+}
+.item-sub.flag-note { color: var(--red); font-weight: 500; }
+.item-sub.near-zero { font-style: italic; }
+
+.item-avg {
+  font-size: 13px;
+  color: var(--label2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.par-badge-wrap { flex-shrink: 0; text-align: center; }
+
+.par-badge {
+  min-width: 40px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  display: inline-block;
+}
+
+.tier-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 2px;
+  letter-spacing: 0.4px;
+  display: block;
+}
+
+.tier-H .par-badge    { background: rgba(52,199,89,0.14);   color: #1A7A35; }
+.tier-H .tier-label   { color: #1A7A35; }
+.tier-M .par-badge    { background: rgba(255,149,0,0.14);   color: #B86A00; }
+.tier-M .tier-label   { color: #B86A00; }
+.tier-L .par-badge    { background: rgba(142,142,147,0.12); color: var(--gray); }
+.tier-L .tier-label   { color: var(--gray); }
+.tier-F .par-badge    { background: rgba(88,86,214,0.12);   color: var(--purple); }
+.tier-F .tier-label   { color: var(--purple); }
+.tier-FLAG .par-badge { background: rgba(255,59,48,0.12);   color: var(--red); }
+.tier-FLAG .tier-label{ color: var(--red); }
+.tier-ZERO .par-badge { background: rgba(142,142,147,0.07); color: var(--label3); }
+.tier-ZERO .tier-label{ color: var(--label3); }
+
+/* ── Prep Mode ── */
+.prep-col-header {
+  display: grid;
+  grid-template-columns: 1fr 44px 56px 54px;
+  padding: 6px 16px;
+  gap: 8px;
+  background: rgba(60,60,67,0.04);
+  border-bottom: 0.5px solid var(--sep);
+}
+.prep-col {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--label2);
+  text-align: center;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.prep-col:first-child { text-align: left; }
+
+.item-row-prep {
+  display: grid;
+  grid-template-columns: 1fr 44px 56px 54px;
+  align-items: center;
+  padding: 6px 16px;
+  border-bottom: 0.5px solid var(--sep);
+  gap: 8px;
+  /* ② Bigger tap target — min-height up from 48 to 56px */
+  min-height: 56px;
+}
+.item-row-prep:last-child { border-bottom: none; }
+
+.prep-par {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ② Bigger input — vertical padding up from 6px to 11px */
+.prep-input {
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  text-align: center;
+  border: 1.5px solid var(--sep);
+  border-radius: 8px;
+  padding: 11px 2px;
+  background: var(--bg);
+  color: var(--label);
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s, background 0.15s;
+  /* ② Tell iOS keyboard this is a numeric field with a Next button */
+  inputmode: numeric;
+}
+.prep-input:focus {
+  border-color: var(--blue);
+  background: white;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.prep-need {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 8px;
+  padding: 11px 2px;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+.prep-need.positive { background: rgba(52,199,89,0.13); color: #1A7A35; }
+.prep-need.negative { background: rgba(255,59,48,0.12); color: var(--red); }
+.prep-need.zero     { background: rgba(52,199,89,0.08); color: #1A7A35; }
+.prep-need.empty    { color: var(--label3); }
+
+/* ── Legend ── */
+.legend {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--label2);
+}
+.legend-swatch {
+  width: 10px; height: 10px; border-radius: 3px;
+}
+
+/* ── Notes ── */
+.notes-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--label2);
+  line-height: 1.65;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 2px 10px rgba(0,0,0,0.04);
+}
+.notes-card strong { color: var(--label); font-weight: 600; }
+
+/* ── Print ── */
+#print-view { display: none; }
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .nav-bar, .info-strip, .content { display: none !important; }
+  #print-view { display: block !important; zoom: 0.9; }
+  body { background: white; margin: 0; padding: 0; font-family: -apple-system, Arial, sans-serif; }
+
+  .pv-top { padding: 5px 10px 4px; border-bottom: 2px solid #1B4332; display: flex; justify-content: space-between; align-items: baseline; }
+  .pv-title { font-size: 13px; font-weight: 700; color: #1B4332; text-transform: uppercase; }
+  .pv-sub   { font-size: 7.5px; color: #777; margin-top: 1px; }
+  .pv-wlines { padding: 3px 10px 4px; font-size: 8px; color: #444; display: flex; gap: 28px; }
+  .pv-wlabel { font-weight: 600; white-space: nowrap; margin-right: 3px; }
+  .pv-wline  { border-bottom: 1px solid #999; display: inline-block; width: 150px; }
+  .pv-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 10px; padding: 0 10px; }
+  .pv-stn  { margin-bottom: 5px; }
+  .pv-sname { background: #1B4332; color: white; font-size: 7.5px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 2px 5px; }
+  .pv-ch { display: grid; grid-template-columns: 1fr 18px 28px 28px 14px; gap: 0 2px; padding: 1px 5px; font-size: 6.5px; font-weight: 700; color: #999; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #ddd; background: #f8f8f8; }
+  .pv-ch span { text-align: center; }
+  .pv-ch span:first-child { text-align: left; }
+  .pv-row { display: grid; grid-template-columns: 1fr 18px 28px 28px 14px; gap: 0 2px; padding: 2px 5px; border-bottom: 1px solid #eee; align-items: center; }
+  .pv-nm  { font-size: 8px; font-weight: 500; line-height: 1.15; }
+  .pv-sb  { font-size: 6.5px; color: #bbb; }
+  .pv-par { font-size: 8.5px; font-weight: 700; text-align: center; color: #1B4332; }
+  .pv-box { height: 11px; border: 1px solid #bbb; border-radius: 2px; display: block; }
+  .pv-val { font-size: 8.5px; font-weight: 700; text-align: center; }
+  .pv-need-pos { font-size: 8.5px; font-weight: 700; text-align: center; color: #1B4332; }
+  .pv-need-neg { font-size: 8.5px; font-weight: 700; text-align: center; color: #991B1B; }
+  .pv-need-ok  { font-size: 8.5px; font-weight: 700; text-align: center; color: #6B7280; }
+  .pv-dot { width: 12px; height: 12px; border-radius: 2px; font-size: 6.5px; font-weight: 700; text-align: center; line-height: 12px; display: block; margin: auto; }
+  .dH { background: #B7E4C7; color: #1B4332; } .dM { background: #FFF3CD; color: #7A5400; }
+  .dL { background: #F3F4F6; color: #6B7280; } .dF { background: #E8E5FF; color: #4338CA; }
+  .dFLAG { background: #FEE2E2; color: #991B1B; } .dZERO { background: #F9FAFB; color: #ccc; }
+  .pv-footer { padding: 4px 10px; border-top: 1px solid #ddd; margin-top: 2px; font-size: 7px; color: #bbb; display: flex; justify-content: space-between; }
+  @page { margin: 0.25in 0.25in; size: letter portrait; }
+}
+
+/* ── Voice Input ── */
+.mic-btn {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  display: none;
+  line-height: 1;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mic-btn:active { transform: scale(0.85); }
+body.prep-mode .mic-btn { display: block; }
+body.listening .mic-btn { animation: pulse-mic 0.9s ease-in-out infinite; }
+
+@keyframes pulse-mic {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.voice-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(255,59,48,0.07);
+  border-bottom: 0.5px solid rgba(255,59,48,0.18);
+  font-size: 13px;
+  color: #FF3B30;
+  font-weight: 500;
+}
+body.listening .voice-bar { display: flex; }
+
+.voice-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #FF3B30;
+  flex-shrink: 0;
+  animation: pulse-dot 0.9s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1.1); }
+  50%       { opacity: 0.25; transform: scale(0.65); }
+}
+
+.voice-toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: 16px;
+  right: 16px;
+  background: rgba(28,28,30,0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  padding: 14px 16px;
+  z-index: 300;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+.voice-toast.show { opacity: 1; transform: translateY(0); }
+.voice-heard {
+  font-size: 11px;
+  color: rgba(255,255,255,0.38);
+  font-style: italic;
+  margin-bottom: 7px;
+  line-height: 1.4;
+}
+.voice-toast-line {
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.75;
+}
+.voice-toast-line.hit  { color: #34C759; }
+.voice-toast-line.miss { color: #FF9500; }
+
+</style>
+</head>
+<body>
+
+<!-- Nav Bar -->
+<div class="nav-bar">
+  <div class="nav-top">
+    <div>
+      <div class="nav-title">FOH Prep Pars</div>
+      <div class="nav-subtitle">Lazy Acres #1827 &middot; Mission Hills</div>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-text-btn" onclick="printList()">Print</button>
+      <button class="nav-text-btn danger" onclick="clearAll()">Clear</button>
+      <button class="mic-btn" id="micBtn" onclick="toggleVoice()">🎤</button>
+      <button class="prep-btn" id="prepToggle" onclick="togglePrepMode()">Prep</button>
+    </div>
+  </div>
+  <div class="day-scroll" id="dayNav"></div>
+</div>
+
+
+<!-- Voice Listening Bar -->
+<div class="voice-bar">
+  <div class="voice-dot"></div>
+  <span>Listening&hellip; say item name and count</span>
+</div>
+
+<!-- Voice Result Toast -->
+<div class="voice-toast" id="voiceToast"></div>
+
+<!-- Info Strip -->
+<div class="info-strip">
+  <span class="info-chip" id="coverageLabel"></span>
+  <span class="info-chip">3-day avg &times; 1.10</span>
+  <span class="prep-chip">PREP MODE</span>
+</div>
+
+<!-- Main Content -->
+<div class="content" id="mainContent"></div>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+const PAR_DATA = {"Monday": {"Quiche Lorraine (slices)": 3, "Quiche Florentine (slices)": 3, "Power OO": 11, "Cinnamon Apple OO": 5, "Blueberry OO": 3, "Strawberry OO": 13, "Hard Boiled Eggs (3pk)": 7, "Pork Tamale": 5, "Chicken Tamale": 4, "Veggie Tamale": 4, "Roast Beef Wrap": 9, "Tuna Wrap": 5, "Chicken Caesar Wrap": 19, "Curry Wrap": 8, "Turkey Wrap": 23, "Ham Swiss Pretzel": 5, "Turkey Sandwich": 12, "Alt Sandwich": 8, "Tuna Salad": 24, "Rotisserie Chicken Salad": 14, "Egg Salad": 7, "Curry Chicken Salad": 5, "Sesame Noodles": 26, "Broccoli Crunch Salad": 7, "Mushroom Arugula Cous Cous": 21, "Natural Potato Salad": 8, "Macaroni Salad": 6, "Mediterranean Chickpea": 7, "Kung Pao Tofu": 1, "Asparagus Artichoke Salad": 4, "Turkish Garbanzo Bean Salad": 2, "New Beet Salad": 3, "Greek Orzo Salad": 1, "Romanesco Quinoa Salad": 2, "Coleslaw": 4, "Winter Quinoa Salad": 2, "Spinach Pasta Salad": 8, "Quinoa Detox Salad": 8, "Kale Recharge Salad": 11, "Shredded Chicken": 18, "Tofu": 7, "Brisket": 7, "Chicken Noodle": 26, "Lemon Chicken Orzo": 8, "Broccoli Cheese": 5, "Spring Vegetable": 8, "Maine Lobster Bisque": 6, "Route 66 Chili": 5, "Chicken Tortilla": 7, "Chicken Enchilada Soup": 7, "Tomato Basil Bisque": 5, "New England Clam Chowder": 3, "Minestrone": 5, "Russian Cabbage": 4, "Wild Mushroom Bisque": 6, "Tomato Bisque (MWO)": 7, "Split Pea": 2, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 8}, "Tuesday": {"Quiche Lorraine (slices)": 3, "Quiche Florentine (slices)": 3, "Power OO": 8, "Cinnamon Apple OO": 6, "Blueberry OO": 3, "Strawberry OO": 12, "Hard Boiled Eggs (3pk)": 5, "Pork Tamale": 5, "Chicken Tamale": 6, "Veggie Tamale": 3, "Roast Beef Wrap": 6, "Tuna Wrap": 5, "Chicken Caesar Wrap": 20, "Curry Wrap": 6, "Turkey Wrap": 22, "Ham Swiss Pretzel": 4, "Turkey Sandwich": 9, "Alt Sandwich": 8, "Tuna Salad": 21, "Rotisserie Chicken Salad": 13, "Egg Salad": 7, "Curry Chicken Salad": 5, "Sesame Noodles": 24, "Broccoli Crunch Salad": 6, "Mushroom Arugula Cous Cous": 16, "Natural Potato Salad": 9, "Macaroni Salad": 4, "Mediterranean Chickpea": 6, "Kung Pao Tofu": 2, "Asparagus Artichoke Salad": 4, "Turkish Garbanzo Bean Salad": 2, "New Beet Salad": 2, "Greek Orzo Salad": 1, "Romanesco Quinoa Salad": 2, "Coleslaw": 4, "Winter Quinoa Salad": 2, "Spinach Pasta Salad": 7, "Quinoa Detox Salad": 3, "Kale Recharge Salad": 11, "Shredded Chicken": 14, "Tofu": 5, "Brisket": 6, "Chicken Noodle": 24, "Lemon Chicken Orzo": 6, "Broccoli Cheese": 3, "Spring Vegetable": 7, "Maine Lobster Bisque": 6, "Route 66 Chili": 4, "Chicken Tortilla": 8, "Chicken Enchilada Soup": 7, "Tomato Basil Bisque": 4, "New England Clam Chowder": 4, "Minestrone": 6, "Russian Cabbage": 3, "Wild Mushroom Bisque": 9, "Tomato Bisque (MWO)": 9, "Split Pea": 3, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 0, "Matzo Ball Soup": 6}, "Wednesday": {"Quiche Lorraine (slices)": 2, "Quiche Florentine (slices)": 2, "Power OO": 12, "Cinnamon Apple OO": 9, "Blueberry OO": 3, "Strawberry OO": 15, "Hard Boiled Eggs (3pk)": 5, "Pork Tamale": 6, "Chicken Tamale": 6, "Veggie Tamale": 3, "Roast Beef Wrap": 5, "Tuna Wrap": 5, "Chicken Caesar Wrap": 16, "Curry Wrap": 9, "Turkey Wrap": 23, "Ham Swiss Pretzel": 2, "Turkey Sandwich": 9, "Alt Sandwich": 8, "Tuna Salad": 21, "Rotisserie Chicken Salad": 13, "Egg Salad": 7, "Curry Chicken Salad": 6, "Sesame Noodles": 27, "Broccoli Crunch Salad": 7, "Mushroom Arugula Cous Cous": 15, "Natural Potato Salad": 12, "Macaroni Salad": 6, "Mediterranean Chickpea": 6, "Kung Pao Tofu": 2, "Asparagus Artichoke Salad": 4, "Turkish Garbanzo Bean Salad": 2, "New Beet Salad": 2, "Greek Orzo Salad": 1, "Romanesco Quinoa Salad": 2, "Coleslaw": 3, "Winter Quinoa Salad": 2, "Spinach Pasta Salad": 8, "Quinoa Detox Salad": 4, "Kale Recharge Salad": 9, "Shredded Chicken": 14, "Tofu": 3, "Brisket": 5, "Chicken Noodle": 30, "Lemon Chicken Orzo": 5, "Broccoli Cheese": 2, "Spring Vegetable": 6, "Maine Lobster Bisque": 6, "Route 66 Chili": 4, "Chicken Tortilla": 8, "Chicken Enchilada Soup": 5, "Tomato Basil Bisque": 3, "New England Clam Chowder": 6, "Minestrone": 7, "Russian Cabbage": 3, "Wild Mushroom Bisque": 7, "Tomato Bisque (MWO)": 9, "Split Pea": 4, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 7}, "Thursday": {"Quiche Lorraine (slices)": 2, "Quiche Florentine (slices)": 3, "Power OO": 13, "Cinnamon Apple OO": 9, "Blueberry OO": 3, "Strawberry OO": 15, "Hard Boiled Eggs (3pk)": 5, "Pork Tamale": 7, "Chicken Tamale": 7, "Veggie Tamale": 3, "Roast Beef Wrap": 7, "Tuna Wrap": 5, "Chicken Caesar Wrap": 16, "Curry Wrap": 16, "Turkey Wrap": 22, "Ham Swiss Pretzel": 2, "Turkey Sandwich": 12, "Alt Sandwich": 9, "Tuna Salad": 21, "Rotisserie Chicken Salad": 11, "Egg Salad": 8, "Curry Chicken Salad": 8, "Sesame Noodles": 24, "Broccoli Crunch Salad": 7, "Mushroom Arugula Cous Cous": 17, "Natural Potato Salad": 12, "Macaroni Salad": 7, "Mediterranean Chickpea": 5, "Kung Pao Tofu": 2, "Asparagus Artichoke Salad": 3, "Turkish Garbanzo Bean Salad": 2, "New Beet Salad": 3, "Greek Orzo Salad": 1, "Romanesco Quinoa Salad": 2, "Coleslaw": 5, "Winter Quinoa Salad": 3, "Spinach Pasta Salad": 12, "Quinoa Detox Salad": 4, "Kale Recharge Salad": 11, "Shredded Chicken": 16, "Tofu": 3, "Brisket": 6, "Chicken Noodle": 35, "Lemon Chicken Orzo": 7, "Broccoli Cheese": 4, "Spring Vegetable": 4, "Maine Lobster Bisque": 6, "Route 66 Chili": 4, "Chicken Tortilla": 7, "Chicken Enchilada Soup": 5, "Tomato Basil Bisque": 2, "New England Clam Chowder": 8, "Minestrone": 7, "Russian Cabbage": 3, "Wild Mushroom Bisque": 5, "Tomato Bisque (MWO)": 7, "Split Pea": 3, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 7}, "Friday": {"Quiche Lorraine (slices)": 2, "Quiche Florentine (slices)": 3, "Power OO": 16, "Cinnamon Apple OO": 8, "Blueberry OO": 3, "Strawberry OO": 14, "Hard Boiled Eggs (3pk)": 6, "Pork Tamale": 7, "Chicken Tamale": 8, "Veggie Tamale": 3, "Roast Beef Wrap": 9, "Tuna Wrap": 5, "Chicken Caesar Wrap": 16, "Curry Wrap": 19, "Turkey Wrap": 20, "Ham Swiss Pretzel": 3, "Turkey Sandwich": 13, "Alt Sandwich": 11, "Tuna Salad": 22, "Rotisserie Chicken Salad": 13, "Egg Salad": 11, "Curry Chicken Salad": 9, "Sesame Noodles": 26, "Broccoli Crunch Salad": 6, "Mushroom Arugula Cous Cous": 21, "Natural Potato Salad": 14, "Macaroni Salad": 11, "Mediterranean Chickpea": 6, "Kung Pao Tofu": 3, "Asparagus Artichoke Salad": 4, "Turkish Garbanzo Bean Salad": 1, "New Beet Salad": 3, "Greek Orzo Salad": 1, "Romanesco Quinoa Salad": 2, "Coleslaw": 6, "Winter Quinoa Salad": 4, "Spinach Pasta Salad": 14, "Quinoa Detox Salad": 8, "Kale Recharge Salad": 11, "Shredded Chicken": 22, "Tofu": 5, "Brisket": 6, "Chicken Noodle": 38, "Lemon Chicken Orzo": 9, "Broccoli Cheese": 6, "Spring Vegetable": 4, "Maine Lobster Bisque": 5, "Route 66 Chili": 5, "Chicken Tortilla": 6, "Chicken Enchilada Soup": 6, "Tomato Basil Bisque": 2, "New England Clam Chowder": 9, "Minestrone": 7, "Russian Cabbage": 4, "Wild Mushroom Bisque": 2, "Tomato Bisque (MWO)": 4, "Split Pea": 3, "Edamame Udon Soup": 0, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 7}, "Saturday": {"Quiche Lorraine (slices)": 3, "Quiche Florentine (slices)": 3, "Power OO": 15, "Cinnamon Apple OO": 8, "Blueberry OO": 3, "Strawberry OO": 13, "Hard Boiled Eggs (3pk)": 6, "Pork Tamale": 6, "Chicken Tamale": 6, "Veggie Tamale": 3, "Roast Beef Wrap": 11, "Tuna Wrap": 6, "Chicken Caesar Wrap": 16, "Curry Wrap": 18, "Turkey Wrap": 18, "Ham Swiss Pretzel": 4, "Turkey Sandwich": 16, "Alt Sandwich": 11, "Tuna Salad": 23, "Rotisserie Chicken Salad": 13, "Egg Salad": 9, "Curry Chicken Salad": 10, "Sesame Noodles": 24, "Broccoli Crunch Salad": 7, "Mushroom Arugula Cous Cous": 24, "Natural Potato Salad": 13, "Macaroni Salad": 12, "Mediterranean Chickpea": 6, "Kung Pao Tofu": 3, "Asparagus Artichoke Salad": 3, "Turkish Garbanzo Bean Salad": 2, "New Beet Salad": 3, "Greek Orzo Salad": 2, "Romanesco Quinoa Salad": 2, "Coleslaw": 5, "Winter Quinoa Salad": 4, "Spinach Pasta Salad": 16, "Quinoa Detox Salad": 12, "Kale Recharge Salad": 10, "Shredded Chicken": 23, "Tofu": 7, "Brisket": 7, "Chicken Noodle": 38, "Lemon Chicken Orzo": 12, "Broccoli Cheese": 7, "Spring Vegetable": 4, "Maine Lobster Bisque": 5, "Route 66 Chili": 6, "Chicken Tortilla": 6, "Chicken Enchilada Soup": 6, "Tomato Basil Bisque": 2, "New England Clam Chowder": 7, "Minestrone": 7, "Russian Cabbage": 5, "Wild Mushroom Bisque": 3, "Tomato Bisque (MWO)": 4, "Split Pea": 2, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 8}, "Sunday": {"Quiche Lorraine (slices)": 3, "Quiche Florentine (slices)": 3, "Power OO": 14, "Cinnamon Apple OO": 5, "Blueberry OO": 3, "Strawberry OO": 12, "Hard Boiled Eggs (3pk)": 7, "Pork Tamale": 5, "Chicken Tamale": 6, "Veggie Tamale": 3, "Roast Beef Wrap": 11, "Tuna Wrap": 6, "Chicken Caesar Wrap": 20, "Curry Wrap": 13, "Turkey Wrap": 21, "Ham Swiss Pretzel": 4, "Turkey Sandwich": 14, "Alt Sandwich": 9, "Tuna Salad": 24, "Rotisserie Chicken Salad": 14, "Egg Salad": 8, "Curry Chicken Salad": 8, "Sesame Noodles": 25, "Broccoli Crunch Salad": 7, "Mushroom Arugula Cous Cous": 24, "Natural Potato Salad": 9, "Macaroni Salad": 11, "Mediterranean Chickpea": 7, "Kung Pao Tofu": 2, "Asparagus Artichoke Salad": 3, "Turkish Garbanzo Bean Salad": 1, "New Beet Salad": 4, "Greek Orzo Salad": 2, "Romanesco Quinoa Salad": 2, "Coleslaw": 5, "Winter Quinoa Salad": 3, "Spinach Pasta Salad": 14, "Quinoa Detox Salad": 10, "Kale Recharge Salad": 10, "Shredded Chicken": 24, "Tofu": 8, "Brisket": 8, "Chicken Noodle": 31, "Lemon Chicken Orzo": 12, "Broccoli Cheese": 7, "Spring Vegetable": 5, "Maine Lobster Bisque": 6, "Route 66 Chili": 5, "Chicken Tortilla": 6, "Chicken Enchilada Soup": 7, "Tomato Basil Bisque": 4, "New England Clam Chowder": 6, "Minestrone": 6, "Russian Cabbage": 5, "Wild Mushroom Bisque": 4, "Tomato Bisque (MWO)": 5, "Split Pea": 1, "Edamame Udon Soup": 1, "Heart Healthy Turkey Chili": 1, "Matzo Ball Soup": 8}};
+const DAILY_AVG = {
+  "Monday": {"Quiche Lorraine (slices)":1.09,"Quiche Florentine (slices)":1.0,"Power OO":3.78,"Cinnamon Apple OO":1.67,"Blueberry OO":0.78,"Strawberry OO":4.44,"Hard Boiled Eggs (3pk)":2.22,"Pork Tamale":1.56,"Chicken Tamale":0.44,"Veggie Tamale":1.0,"Roast Beef Wrap":3.56,"Tuna Wrap":2.11,"Chicken Caesar Wrap":4.22,"Curry Wrap":3.89,"Turkey Wrap":5.44,"Ham Swiss Pretzel":1.22,"Turkey Sandwich":5.33,"Alt Sandwich":2.89,"Tuna Salad":7.29,"Rotisserie Chicken Salad":3.64,"Egg Salad":1.38,"Curry Chicken Salad":2.32,"Sesame Noodles":7.19,"Broccoli Crunch Salad":2.8,"Mushroom Arugula Cous Cous":7.33,"Natural Potato Salad":2.02,"Macaroni Salad":2.7,"Mediterranean Chickpea":1.58,"Kung Pao Tofu":0.25,"Asparagus Artichoke Salad":0.94,"Turkish Garbanzo Bean Salad":0.35,"New Beet Salad":1.01,"Greek Orzo Salad":0.42,"Romanesco Quinoa Salad":0.37,"Coleslaw":0.73,"Winter Quinoa Salad":0.35,"Spinach Pasta Salad":4.34,"Quinoa Detox Salad":4.25,"Kale Recharge Salad":2.21,"Shredded Chicken":6.9,"Tofu":2.94,"Brisket":2.74,"Chicken Noodle":10.0,"Lemon Chicken Orzo":3.44,"Broccoli Cheese":2.33,"Spring Vegetable":1.56,"Maine Lobster Bisque":1.44,"Route 66 Chili":1.89,"Chicken Tortilla":1.33,"Chicken Enchilada Soup":1.33,"Tomato Basil Bisque":1.0,"New England Clam Chowder":0.89,"Minestrone":1.56,"Russian Cabbage":1.44,"Wild Mushroom Bisque":0.44,"Tomato Bisque (MWO)":0.67,"Split Pea":0.11,"Edamame Udon Soup":0.22,"Heart Healthy Turkey Chili":0.11,"Matzo Ball Soup":3.78},
+  "Tuesday": {"Quiche Lorraine (slices)":0.68,"Quiche Florentine (slices)":0.97,"Power OO":3.11,"Cinnamon Apple OO":0,"Blueberry OO":1.11,"Strawberry OO":2.67,"Hard Boiled Eggs (3pk)":2.19,"Pork Tamale":0.67,"Chicken Tamale":1.78,"Veggie Tamale":1.11,"Roast Beef Wrap":2.56,"Tuna Wrap":1.11,"Chicken Caesar Wrap":7.56,"Curry Wrap":2.0,"Turkey Wrap":7.33,"Ham Swiss Pretzel":1.33,"Turkey Sandwich":2.67,"Alt Sandwich":1.89,"Tuna Salad":6.06,"Rotisserie Chicken Salad":3.38,"Egg Salad":2.28,"Curry Chicken Salad":1.19,"Sesame Noodles":6.14,"Broccoli Crunch Salad":1.2,"Mushroom Arugula Cous Cous":5.33,"Natural Potato Salad":1.28,"Macaroni Salad":1.21,"Mediterranean Chickpea":1.87,"Kung Pao Tofu":0.31,"Asparagus Artichoke Salad":0.67,"Turkish Garbanzo Bean Salad":0.28,"New Beet Salad":1.13,"Greek Orzo Salad":0.29,"Romanesco Quinoa Salad":0.22,"Coleslaw":1.64,"Winter Quinoa Salad":0.44,"Spinach Pasta Salad":1.58,"Quinoa Detox Salad":0.86,"Kale Recharge Salad":3.56,"Shredded Chicken":4.85,"Tofu":2.6,"Brisket":2.02,"Chicken Noodle":5.11,"Lemon Chicken Orzo":2.78,"Broccoli Cheese":1.67,"Spring Vegetable":2.11,"Maine Lobster Bisque":1.89,"Route 66 Chili":0.78,"Chicken Tortilla":1.89,"Chicken Enchilada Soup":2.67,"Tomato Basil Bisque":1.78,"New England Clam Chowder":0.89,"Minestrone":1.22,"Russian Cabbage":1.0,"Wild Mushroom Bisque":1.67,"Tomato Bisque (MWO)":2.22,"Split Pea":0.22,"Edamame Udon Soup":0.22,"Heart Healthy Turkey Chili":0.0,"Matzo Ball Soup":1.44},
+  "Wednesday": {"Quiche Lorraine (slices)":0.65,"Quiche Florentine (slices)":0.61,"Power OO":2.22,"Cinnamon Apple OO":2.0,"Blueberry OO":0.22,"Strawberry OO":3.67,"Hard Boiled Eggs (3pk)":1.26,"Pork Tamale":1.67,"Chicken Tamale":1.22,"Veggie Tamale":0.67,"Roast Beef Wrap":1.67,"Tuna Wrap":1.11,"Chicken Caesar Wrap":3.78,"Curry Wrap":1.11,"Turkey Wrap":5.78,"Ham Swiss Pretzel":1.11,"Turkey Sandwich":1.89,"Alt Sandwich":2.44,"Tuna Salad":5.96,"Rotisserie Chicken Salad":4.05,"Egg Salad":2.38,"Curry Chicken Salad":0.88,"Sesame Noodles":7.96,"Broccoli Crunch Salad":1.73,"Mushroom Arugula Cous Cous":4.11,"Natural Potato Salad":3.42,"Macaroni Salad":0.91,"Mediterranean Chickpea":2.16,"Kung Pao Tofu":0.18,"Asparagus Artichoke Salad":1.3,"Turkish Garbanzo Bean Salad":0.44,"New Beet Salad":0.06,"Greek Orzo Salad":0.17,"Romanesco Quinoa Salad":0.59,"Coleslaw":0.43,"Winter Quinoa Salad":0.21,"Spinach Pasta Salad":1.01,"Quinoa Detox Salad":1.26,"Kale Recharge Salad":2.66,"Shredded Chicken":2.92,"Tofu":0.81,"Brisket":1.17,"Chicken Noodle":6.33,"Lemon Chicken Orzo":0.67,"Broccoli Cheese":0.11,"Spring Vegetable":2.78,"Maine Lobster Bisque":1.44,"Route 66 Chili":1.33,"Chicken Tortilla":2.56,"Chicken Enchilada Soup":1.78,"Tomato Basil Bisque":0.89,"New England Clam Chowder":0.67,"Minestrone":1.67,"Russian Cabbage":1.0,"Wild Mushroom Bisque":2.67,"Tomato Bisque (MWO)":2.78,"Split Pea":1.0,"Edamame Udon Soup":0.22,"Heart Healthy Turkey Chili":0.0,"Matzo Ball Soup":2.0},
+  "Thursday": {"Quiche Lorraine (slices)":0.6,"Quiche Florentine (slices)":0.25,"Power OO":1.89,"Cinnamon Apple OO":3.44,"Blueberry OO":1.11,"Strawberry OO":3.0,"Hard Boiled Eggs (3pk)":1.04,"Pork Tamale":1.89,"Chicken Tamale":1.78,"Veggie Tamale":0.67,"Roast Beef Wrap":0.89,"Tuna Wrap":1.78,"Chicken Caesar Wrap":4.67,"Curry Wrap":2.0,"Turkey Wrap":5.22,"Ham Swiss Pretzel":0.33,"Turkey Sandwich":3.11,"Alt Sandwich":2.33,"Tuna Salad":5.36,"Rotisserie Chicken Salad":2.92,"Egg Salad":1.19,"Curry Chicken Salad":1.68,"Sesame Noodles":5.8,"Broccoli Crunch Salad":1.89,"Mushroom Arugula Cous Cous":3.37,"Natural Potato Salad":3.06,"Macaroni Salad":1.32,"Mediterranean Chickpea":1.25,"Kung Pao Tofu":0.51,"Asparagus Artichoke Salad":0.85,"Turkish Garbanzo Bean Salad":0.61,"New Beet Salad":0.51,"Greek Orzo Salad":0.1,"Romanesco Quinoa Salad":0.42,"Coleslaw":0.78,"Winter Quinoa Salad":0.4,"Spinach Pasta Salad":3.28,"Quinoa Detox Salad":0.12,"Kale Recharge Salad":2.5,"Shredded Chicken":3.09,"Tofu":0.3,"Brisket":1.42,"Chicken Noodle":8.11,"Lemon Chicken Orzo":1.56,"Broccoli Cheese":0.22,"Spring Vegetable":0.89,"Maine Lobster Bisque":2.11,"Route 66 Chili":1.33,"Chicken Tortilla":2.44,"Chicken Enchilada Soup":1.33,"Tomato Basil Bisque":0.33,"New England Clam Chowder":2.0,"Minestrone":1.89,"Russian Cabbage":0.67,"Wild Mushroom Bisque":3.22,"Tomato Bisque (MWO)":3.11,"Split Pea":0.78,"Edamame Udon Soup":0.22,"Heart Healthy Turkey Chili":0.0,"Matzo Ball Soup":1.89},
+  "Friday": {"Quiche Lorraine (slices)":0.31,"Quiche Florentine (slices)":0.87,"Power OO":5.11,"Cinnamon Apple OO":2.0,"Blueberry OO":0.89,"Strawberry OO":5.22,"Hard Boiled Eggs (3pk)":1.63,"Pork Tamale":1.89,"Chicken Tamale":2.22,"Veggie Tamale":0.78,"Roast Beef Wrap":1.89,"Tuna Wrap":1.22,"Chicken Caesar Wrap":4.44,"Curry Wrap":4.67,"Turkey Wrap":7.44,"Ham Swiss Pretzel":0.33,"Turkey Sandwich":2.78,"Alt Sandwich":2.44,"Tuna Salad":6.08,"Rotisserie Chicken Salad":3.67,"Egg Salad":2.42,"Curry Chicken Salad":2.13,"Sesame Noodles":8.23,"Broccoli Crunch Salad":2.05,"Mushroom Arugula Cous Cous":4.42,"Natural Potato Salad":2.84,"Macaroni Salad":2.56,"Mediterranean Chickpea":1.41,"Kung Pao Tofu":0.41,"Asparagus Artichoke Salad":1.18,"Turkish Garbanzo Bean Salad":0.03,"New Beet Salad":0.97,"Greek Orzo Salad":0.28,"Romanesco Quinoa Salad":0.3,"Coleslaw":1.4,"Winter Quinoa Salad":0.46,"Spinach Pasta Salad":2.83,"Quinoa Detox Salad":1.49,"Kale Recharge Salad":2.71,"Shredded Chicken":5.38,"Tofu":1.02,"Brisket":1.83,"Chicken Noodle":10.22,"Lemon Chicken Orzo":2.0,"Broccoli Cheese":1.0,"Spring Vegetable":1.44,"Maine Lobster Bisque":1.56,"Route 66 Chili":0.89,"Chicken Tortilla":1.89,"Chicken Enchilada Soup":1.33,"Tomato Basil Bisque":0.67,"New England Clam Chowder":2.11,"Minestrone":2.11,"Russian Cabbage":0.67,"Wild Mushroom Bisque":0.22,"Tomato Bisque (MWO)":1.44,"Split Pea":1.11,"Edamame Udon Soup":0.0,"Heart Healthy Turkey Chili":0.22,"Matzo Ball Soup":2.22},
+  "Saturday": {"Quiche Lorraine (slices)":0.38,"Quiche Florentine (slices)":0.98,"Power OO":3.56,"Cinnamon Apple OO":2.22,"Blueberry OO":0.56,"Strawberry OO":4.11,"Hard Boiled Eggs (3pk)":1.22,"Pork Tamale":1.78,"Chicken Tamale":2.11,"Veggie Tamale":1.0,"Roast Beef Wrap":3.22,"Tuna Wrap":1.22,"Chicken Caesar Wrap":4.11,"Curry Wrap":5.89,"Turkey Wrap":4.89,"Ham Swiss Pretzel":1.0,"Turkey Sandwich":3.78,"Alt Sandwich":3.11,"Tuna Salad":5.39,"Rotisserie Chicken Salad":2.57,"Egg Salad":2.9,"Curry Chicken Salad":2.86,"Sesame Noodles":5.31,"Broccoli Crunch Salad":1.58,"Mushroom Arugula Cous Cous":5.67,"Natural Potato Salad":3.5,"Macaroni Salad":2.16,"Mediterranean Chickpea":1.13,"Kung Pao Tofu":0.66,"Asparagus Artichoke Salad":0.67,"Turkish Garbanzo Bean Salad":0.49,"New Beet Salad":0.8,"Greek Orzo Salad":0.29,"Romanesco Quinoa Salad":0.63,"Coleslaw":1.76,"Winter Quinoa Salad":1.26,"Spinach Pasta Salad":3.38,"Quinoa Detox Salad":1.96,"Kale Recharge Salad":3.44,"Shredded Chicken":4.34,"Tofu":1.33,"Brisket":1.42,"Chicken Noodle":10.44,"Lemon Chicken Orzo":2.67,"Broccoli Cheese":1.56,"Spring Vegetable":1.06,"Maine Lobster Bisque":1.44,"Route 66 Chili":1.33,"Chicken Tortilla":1.78,"Chicken Enchilada Soup":1.72,"Tomato Basil Bisque":0.39,"New England Clam Chowder":2.5,"Minestrone":2.11,"Russian Cabbage":1.06,"Wild Mushroom Bisque":0.56,"Tomato Bisque (MWO)":1.17,"Split Pea":0.72,"Edamame Udon Soup":0.0,"Heart Healthy Turkey Chili":0.28,"Matzo Ball Soup":1.83},
+  "Sunday": {"Quiche Lorraine (slices)":0.62,"Quiche Florentine (slices)":0.63,"Power OO":4.33,"Cinnamon Apple OO":2.67,"Blueberry OO":0.67,"Strawberry OO":2.22,"Hard Boiled Eggs (3pk)":1.85,"Pork Tamale":2.11,"Chicken Tamale":2.44,"Veggie Tamale":0.44,"Roast Beef Wrap":2.22,"Tuna Wrap":1.33,"Chicken Caesar Wrap":4.22,"Curry Wrap":4.78,"Turkey Wrap":4.33,"Ham Swiss Pretzel":1.0,"Turkey Sandwich":3.56,"Alt Sandwich":3.11,"Tuna Salad":6.1,"Rotisserie Chicken Salad":3.95,"Egg Salad":3.28,"Curry Chicken Salad":3.01,"Sesame Noodles":7.36,"Broccoli Crunch Salad":1.46,"Mushroom Arugula Cous Cous":6.89,"Natural Potato Salad":4.58,"Macaroni Salad":4.44,"Mediterranean Chickpea":2.66,"Kung Pao Tofu":1.08,"Asparagus Artichoke Salad":1.02,"Turkish Garbanzo Bean Salad":0.25,"New Beet Salad":0.69,"Greek Orzo Salad":0.32,"Romanesco Quinoa Salad":0.53,"Coleslaw":1.59,"Winter Quinoa Salad":1.37,"Spinach Pasta Salad":5.33,"Quinoa Detox Salad":3.18,"Kale Recharge Salad":2.56,"Shredded Chicken":7.88,"Tofu":1.63,"Brisket":1.95,"Chicken Noodle":10.67,"Lemon Chicken Orzo":3.33,"Broccoli Cheese":2.11,"Spring Vegetable":0.67,"Maine Lobster Bisque":1.33,"Route 66 Chili":1.78,"Chicken Tortilla":1.67,"Chicken Enchilada Soup":2.11,"Tomato Basil Bisque":0.11,"New England Clam Chowder":2.89,"Minestrone":2.11,"Russian Cabbage":1.44,"Wild Mushroom Bisque":0.89,"Tomato Bisque (MWO)":0.89,"Split Pea":0.33,"Edamame Udon Soup":0.0,"Heart Healthy Turkey Chili":0.33,"Matzo Ball Soup":1.44}
+};
+
+const STATIONS = {
+  "Breakfast": ["Quiche Lorraine (slices)","Quiche Florentine (slices)","Burritos","Power OO","Cinnamon Apple OO","Blueberry OO","Strawberry OO","Hard Boiled Eggs (3pk)","Pork Tamale","Chicken Tamale","Veggie Tamale"],
+  "Wraps & Sandwiches": ["Roast Beef Wrap","Tuna Wrap","Chicken Caesar Wrap","Curry Wrap","Turkey Wrap","Ham Swiss Pretzel","Turkey Sandwich","Alt Sandwich"],
+  "Protein Salads": ["Tuna Salad","Rotisserie Chicken Salad","Egg Salad","Curry Chicken Salad"],
+  "Starch & Grain Salads": ["Sesame Noodles","Broccoli Crunch Salad","Mushroom Arugula Cous Cous","Natural Potato Salad","Macaroni Salad","Mediterranean Chickpea","Kung Pao Tofu","Asparagus Artichoke Salad","Turkish Garbanzo Bean Salad","New Beet Salad","Greek Orzo Salad","Romanesco Quinoa Salad","Coleslaw","Winter Quinoa Salad"],
+  "24oz Salads": ["Spinach Pasta Salad","Quinoa Detox Salad","Kale Recharge Salad"],
+  "End Cap": ["Shredded Chicken","Tofu","Brisket"],
+  "Soups": ["Chicken Noodle","Lemon Chicken Orzo","Matzo Ball Soup","Chicken Tortilla","Minestrone","Chicken Enchilada Soup","New England Clam Chowder","Tomato Bisque (MWO)","Spring Vegetable","Maine Lobster Bisque","Wild Mushroom Bisque","Broccoli Cheese","Route 66 Chili","Russian Cabbage","Tomato Basil Bisque","Split Pea","Edamame Udon Soup","Heart Healthy Turkey Chili"]
+};
+
+const STATION_ICONS = {
+  "Breakfast": "🌅", "Wraps & Sandwiches": "🥪", "Protein Salads": "🥗",
+  "Starch & Grain Salads": "🥣", "24oz Salads": "🫙", "End Cap": "🧊", "Soups": "🍲"
+};
+
+const FLAGGED_ITEMS   = new Set(["Matzo Ball Soup"]);
+const NEAR_ZERO_ITEMS = new Set(["Edamame Udon Soup","Heart Healthy Turkey Chili"]);
+const PROXY_ITEMS     = new Set(["Spinach Pasta Salad","Quinoa Detox Salad","Kale Recharge Salad"]);
+
+const DOW        = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DOW_SHORT  = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DOW_COV    = {"Monday":"Mon → Wed","Tuesday":"Tue → Thu","Wednesday":"Wed → Fri","Thursday":"Thu → Sat","Friday":"Fri → Sun","Saturday":"Sat → Mon","Sunday":"Sun → Tue"};
+
+let currentDay = null;
+let prepMode   = false;
+const collapsedStations = new Set();
+const haveValues = {};
+
+// ── sessionStorage ─────────────────────────────────────────────────────────
+const SS = 'foh_have_';
+function ssKey(day, item) { return SS + day + '_' + item; }
+
+function loadHave(day) {
+  for (const k in haveValues) delete haveValues[k];
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      const pfx = SS + day + '_';
+      if (k && k.startsWith(pfx)) {
+        const v = parseInt(sessionStorage.getItem(k));
+        if (!isNaN(v)) haveValues[k.slice(pfx.length)] = v;
+      }
+    }
+  } catch(e) {}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function getTier(par, item) {
+  if (item === "Burritos") return "F";
+  if (NEAR_ZERO_ITEMS.has(item)) return "ZERO";
+  if (FLAGGED_ITEMS.has(item)) return "FLAG";
+  if (par >= 10) return "H";
+  if (par >= 4)  return "M";
+  return "L";
+}
+
+function safeId(item) { return item.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function sortByTierAndPar(items, pars) {
+  const order = {H:0,M:1,L:2,F:3,FLAG:4,ZERO:5};
+  return [...items].sort((a,b) => {
+    const ta = getTier(pars[a]??0,a), tb = getTier(pars[b]??0,b);
+    if (order[ta] !== order[tb]) return order[ta]-order[tb];
+    return (pars[b]??0)-(pars[a]??0);
+  });
+}
+
+function detectToday() {
+  return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+}
+
+// ── Build flat ordered list of all prep input IDs for keyboard advance ────
+let _prepInputOrder = [];
+function buildInputOrder() {
+  _prepInputOrder = [];
+  const pars = PAR_DATA[currentDay];
+  for (const [station, rawItems] of Object.entries(STATIONS)) {
+    const items = sortByTierAndPar(rawItems, pars);
+    for (const item of items) {
+      _prepInputOrder.push('input-' + safeId(item));
+    }
+  }
+}
+
+// ③ Auto-advance: pressing Enter/Next on iOS moves to the next input
+function advanceToNext(currentInputId) {
+  const idx = _prepInputOrder.indexOf(currentInputId);
+  if (idx === -1) return;
+  const nextId = _prepInputOrder[idx + 1];
+  if (!nextId) {
+    // last field — dismiss keyboard
+    document.getElementById(currentInputId)?.blur();
+    return;
+  }
+  const nextEl = document.getElementById(nextId);
+  if (nextEl) {
+    nextEl.focus();
+    nextEl.select();
+  }
+}
+
+// ── Nav ────────────────────────────────────────────────────────────────────
+function renderDayNav() {
+  document.getElementById('dayNav').innerHTML = DOW.map((d,i) =>
+    `<button class="day-pill${d===currentDay?' active':''}" onclick="selectDay('${d}')">${DOW_SHORT[i]}</button>`
+  ).join('');
+}
+
+function selectDay(day) {
+  currentDay = day;
+  loadHave(day);
+  renderDayNav();
+  renderContent();
+  document.getElementById('coverageLabel').textContent = 'Covers ' + DOW_COV[day];
+}
+
+// ── Toggle ─────────────────────────────────────────────────────────────────
+function toggleStation(name) {
+  collapsedStations.has(name) ? collapsedStations.delete(name) : collapsedStations.add(name);
+  renderContent();
+}
+
+function togglePrepMode() {
+  prepMode = !prepMode;
+  document.body.classList.toggle('prep-mode', prepMode);
+  const btn = document.getElementById('prepToggle');
+  btn.classList.toggle('active', prepMode);
+  btn.textContent = prepMode ? 'Done' : 'Prep';
+  renderContent();
+}
+
+function clearAll() {
+  for (const k in haveValues) delete haveValues[k];
+  try {
+    const rm = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && k.startsWith(SS + currentDay + '_')) rm.push(k);
+    }
+    rm.forEach(k => sessionStorage.removeItem(k));
+  } catch(e) {}
+  renderContent();
+}
+
+// ── Input handlers ─────────────────────────────────────────────────────────
+function onHaveInput(item, val) {
+  const n = parseInt(val);
+  if (val === '' || isNaN(n)) {
+    delete haveValues[item];
+    try { sessionStorage.removeItem(ssKey(currentDay, item)); } catch(e) {}
+  } else {
+    haveValues[item] = n;
+    try { sessionStorage.setItem(ssKey(currentDay, item), n); } catch(e) {}
+  }
+  updateNeedCell(item);
+}
+
+function updateNeedCell(item) {
+  const pars = PAR_DATA[currentDay];
+  const par  = item === "Burritos" ? 12 : Math.ceil(pars[item] ?? 0);
+  const el   = document.getElementById('need-' + safeId(item));
+  if (!el) return;
+  const have = haveValues[item];
+  if (have === undefined) {
+    el.className = 'prep-need empty'; el.textContent = '—';
+  } else {
+    const need = par - have;
+    if (need > 0)      { el.className = 'prep-need positive'; el.textContent = '+' + need; }
+    else if (need < 0) { el.className = 'prep-need negative'; el.textContent = String(need); }
+    else               { el.className = 'prep-need zero';     el.textContent = '✓'; }
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderContent() {
+  const pars = PAR_DATA[currentDay];
+  const avgs = DAILY_AVG[currentDay];
+  let html = '';
+
+  for (const [station, rawItems] of Object.entries(STATIONS)) {
+    const items = sortByTierAndPar(rawItems, pars);
+    const collapsed = collapsedStations.has(station) ? ' collapsed' : '';
+    const icon = STATION_ICONS[station] || '📦';
+    const safeStation = station.replace(/'/g,"\\'");
+
+    html += `<div class="section${collapsed}">`;
+    html += `<div class="section-header" onclick="toggleStation('${safeStation}')">
+      <span class="section-label"><span class="section-icon">${icon}</span>${station}</span>
+      <span class="section-chevron">&#x25BE;</span>
+    </div>`;
+    html += '<div class="section-body"><div class="card">';
+
+    if (prepMode) {
+      html += '<div class="prep-col-header"><span class="prep-col">Item</span><span class="prep-col">Par</span><span class="prep-col">Have</span><span class="prep-col">Need</span></div>';
+
+      for (const item of items) {
+        const par    = pars[item] ?? 0;
+        const parVal = item === "Burritos" ? 12 : Math.ceil(par);
+        const have   = haveValues[item];
+        const haveStr = have !== undefined ? have : '';
+        const sid    = safeId(item);
+        const inputId = 'input-' + sid;
+
+        let needClass = 'empty', needText = '—';
+        if (have !== undefined) {
+          const n = parVal - have;
+          if (n > 0)      { needClass = 'positive'; needText = '+' + n; }
+          else if (n < 0) { needClass = 'negative'; needText = String(n); }
+          else            { needClass = 'zero';     needText = '✓'; }
+        }
+
+        let subHtml = '';
+        if (PROXY_ITEMS.has(item))     subHtml = '<div class="item-sub">16oz proxy</div>';
+        if (FLAGGED_ITEMS.has(item))   subHtml = '<div class="item-sub flag-note">&#9888; UPC verify</div>';
+        if (NEAR_ZERO_ITEMS.has(item)) subHtml = '<div class="item-sub near-zero">near-zero</div>';
+
+        const safeItem = item.replace(/'/g,"\\'");
+
+        // ② onfocus="this.select()" — tap field, just type your number
+        // ③ enterkeyhint="next" — iOS keyboard shows "Next" instead of return
+        // ③ onkeydown — Enter key advances to next input
+        html += `<div class="item-row-prep">
+          <div><div class="item-name">${item}</div>${subHtml}</div>
+          <div class="prep-par">${parVal}</div>
+          <input
+            id="${inputId}"
+            type="number"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            enterkeyhint="next"
+            autocomplete="off"
+            autocorrect="off"
+            class="prep-input"
+            value="${haveStr}"
+            placeholder="—"
+            onfocus="this.select()"
+            oninput="onHaveInput('${safeItem}', this.value)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();advanceToNext('${inputId}');}">
+          <div class="prep-need ${needClass}" id="need-${sid}">${needText}</div>
+        </div>`;
+      }
+
+    } else {
+      for (const item of items) {
+        const par  = pars[item] ?? 0;
+        const avg  = avgs[item];
+        const tier = getTier(par, item);
+        const parDisplay = item === "Burritos" ? "12" : Math.ceil(par);
+        const avgDisplay = (typeof avg === 'number' && avg > 0) ? avg.toFixed(1)+"/d" : '—';
+        const tierLabel  = tier==='F' ? 'FIXED' : tier==='FLAG' ? '&#9888; FLAG' : tier;
+
+        let subHtml = '';
+        if (PROXY_ITEMS.has(item))     subHtml = '<div class="item-sub">16oz proxy</div>';
+        if (FLAGGED_ITEMS.has(item))   subHtml = '<div class="item-sub flag-note">&#9888; UPC verify</div>';
+        if (NEAR_ZERO_ITEMS.has(item)) subHtml = '<div class="item-sub near-zero">near-zero movement</div>';
+
+        html += `<div class="item-row tier-${tier}">
+          <div class="item-info"><div class="item-name">${item}</div>${subHtml}</div>
+          <div class="item-avg">${avgDisplay}</div>
+          <div class="par-badge-wrap">
+            <div class="par-badge">${parDisplay}</div>
+            <span class="tier-label">${tierLabel}</span>
+          </div>
+        </div>`;
+      }
+    }
+
+    html += '</div></div></div>';
+  }
+
+  if (!prepMode) {
+    html += `<div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(52,199,89,0.3)"></div>H = 10+</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(255,149,0,0.3)"></div>M = 4&#8211;9</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(142,142,147,0.2)"></div>L = &lt;4</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:rgba(88,86,214,0.2)"></div>Fixed</div>
+    </div>`;
+  }
+
+  html += `<div class="notes-card">
+    <strong>Prep Par</strong> = 3-day rolling average &times; 1.10 buffer<br>
+    <strong>Quiche</strong> = tracked as slices (Lorraine + Florentine separate)<br>
+    <strong>Hard Boiled Eggs</strong> = 3-packs (cage free &divide; 3)<br>
+    <strong>Burritos</strong> = fixed par 12 (hot bar/cold wall unseparable in BI)<br>
+    <strong>24oz Salads</strong> = 16oz UPC used as proxy<br>
+    <strong>Alt Sandwich</strong> = flex slot, highest-moving non-wall sandwich<br>
+    <strong>Tuna Salad</strong> = includes cranberry tuna (merged)<br>
+    <strong>Tamales</strong> = Nonna's cold wall only (retail 0611665 UPCs excluded)<br>
+    <strong>Soups</strong> = pars held at v1.0 baseline (insufficient UPC coverage in BI export)<br>
+    <strong>Matzo Ball Soup</strong> = UPCs need verification before trusting pars<br>
+    <strong>Edamame Udon / Turkey Chili</strong> = near-zero movement; confirm still on wall
+  </div>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+
+  // ③ Build the ordered input list after DOM is updated
+  if (prepMode) buildInputOrder();
+}
+
+
+// ── Voice Input ───────────────────────────────────────────────────────────────
+
+const VOICE_ALIASES = {
+  "noodles":         "Sesame Noodles",
+  "sesame noodles":  "Sesame Noodles",
+  "sesame":          "Sesame Noodles",
+  "caesar":          "Chicken Caesar Wrap",
+  "couscous":        "Mushroom Arugula Cous Cous",
+  "cous cous":       "Mushroom Arugula Cous Cous",
+  "mushroom":        "Mushroom Arugula Cous Cous",
+  "arugula":         "Mushroom Arugula Cous Cous",
+  "rotisserie":      "Rotisserie Chicken Salad",
+  "potato":          "Natural Potato Salad",
+  "mac":             "Macaroni Salad",
+  "macaroni":        "Macaroni Salad",
+  "chickpea":        "Mediterranean Chickpea",
+  "mediterranean":   "Mediterranean Chickpea",
+  "kung pao":        "Kung Pao Tofu",
+  "artichoke":       "Asparagus Artichoke Salad",
+  "asparagus":       "Asparagus Artichoke Salad",
+  "garbanzo":        "Turkish Garbanzo Bean Salad",
+  "turkish":         "Turkish Garbanzo Bean Salad",
+  "beet":            "New Beet Salad",
+  "greek":           "Greek Orzo Salad",
+  "romanesco":       "Romanesco Quinoa Salad",
+  "slaw":            "Coleslaw",
+  "coleslaw":        "Coleslaw",
+  "winter quinoa":   "Winter Quinoa Salad",
+  "spinach pasta":   "Spinach Pasta Salad",
+  "spinach":         "Spinach Pasta Salad",
+  "detox":           "Quinoa Detox Salad",
+  "quinoa detox":    "Quinoa Detox Salad",
+  "kale":            "Kale Recharge Salad",
+  "recharge":        "Kale Recharge Salad",
+  "shredded":        "Shredded Chicken",
+  "brisket":         "Brisket",
+  "lorraine":        "Quiche Lorraine (slices)",
+  "florentine":      "Quiche Florentine (slices)",
+  "blueberry":       "Blueberry OO",
+  "strawberry":      "Strawberry OO",
+  "power":           "Power OO",
+  "power oats":      "Power OO",
+  "cinnamon":        "Cinnamon Apple OO",
+  "hard boiled":     "Hard Boiled Eggs (3pk)",
+  "eggs":            "Hard Boiled Eggs (3pk)",
+  "pork tamale":     "Pork Tamale",
+  "pork":            "Pork Tamale",
+  "chicken tamale":  "Chicken Tamale",
+  "veggie tamale":   "Veggie Tamale",
+  "veggie":          "Veggie Tamale",
+  "roast beef":      "Roast Beef Wrap",
+  "roast":           "Roast Beef Wrap",
+  "tuna wrap":       "Tuna Wrap",
+  "tuna salad":      "Tuna Salad",
+  "curry wrap":      "Curry Wrap",
+  "turkey wrap":     "Turkey Wrap",
+  "turkey sandwich": "Turkey Sandwich",
+  "ham swiss":       "Ham Swiss Pretzel",
+  "pretzel":         "Ham Swiss Pretzel",
+  "alt sandwich":    "Alt Sandwich",
+  "alt":             "Alt Sandwich",
+  "egg salad":       "Egg Salad",
+  "curry chicken":   "Curry Chicken Salad",
+  "broccoli crunch": "Broccoli Crunch Salad",
+  "broccoli":        "Broccoli Crunch Salad",
+  "burrito":         "Burritos",
+  "tofu":            "Tofu",
+};
+
+function getAllItems() {
+  const s = new Set();
+  for (const list of Object.values(STATIONS)) list.forEach(i => s.add(i));
+  return [...s];
+}
+
+function matchVoiceItem(phrase) {
+  const p = phrase.toLowerCase().trim();
+  // 1. Direct alias
+  if (VOICE_ALIASES[p]) return VOICE_ALIASES[p];
+  // 2. Alias substring — longer aliases first to avoid short false matches
+  const sorted = Object.keys(VOICE_ALIASES).sort((a,b) => b.length - a.length);
+  for (const alias of sorted) {
+    if (p.includes(alias)) return VOICE_ALIASES[alias];
+  }
+  // 3. Word-overlap fuzzy match against actual item names
+  const pWords = p.split(/\s+/).filter(w => w.length > 1);
+  let best = null, bestScore = 0;
+  for (const item of getAllItems()) {
+    const iWords = item.toLowerCase().replace(/[()]/g, '').split(/\s+/);
+    let score = 0;
+    for (const pw of pWords) {
+      for (const iw of iWords) {
+        if (pw === iw)                               score += 4;
+        else if (iw.startsWith(pw) && pw.length > 2) score += 2;
+        else if (iw.includes(pw)   && pw.length > 3) score += 1;
+      }
+    }
+    if (score > bestScore) { bestScore = score; best = item; }
+  }
+  return bestScore >= 2 ? best : null;
+}
+
+const WORD_NUMS = {
+  "zero":0,"one":1,"two":2,"three":3,"four":4,"five":5,"six":6,"seven":7,
+  "eight":8,"nine":9,"ten":10,"eleven":11,"twelve":12,"thirteen":13,
+  "fourteen":14,"fifteen":15,"sixteen":16,"seventeen":17,"eighteen":18,
+  "nineteen":19,"twenty":20,"twenty-one":21,"twenty-two":22,"twenty-three":23,
+  "twenty-four":24,"twenty-five":25,"twenty-six":26,"twenty-seven":27,
+  "twenty-eight":28,"twenty-nine":29,"thirty":30
+};
+
+function normalizeNumbers(text) {
+  // Replace written-out numbers with digits
+  let t = text;
+  // Multi-word first (twenty-five before five)
+  for (const [word, num] of Object.entries(WORD_NUMS).sort((a,b) => b[0].length - a[0].length)) {
+    t = t.replace(new RegExp('\\b' + word + '\\b', 'gi'), ' ' + num + ' ');
+  }
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+function parseVoiceTranscript(transcript) {
+  const text   = normalizeNumbers(transcript.toLowerCase().replace(/[^a-z0-9\s\-]/g, ' ')).replace(/[^a-z0-9\s]/g, ' ').trim();
+  const tokens = text.split(/\s+/);
+  const results = [];
+
+  const numIdxs = tokens.reduce((acc, t, i) => { if (/^\d+$/.test(t)) acc.push(i); return acc; }, []);
+  if (numIdxs.length === 0) return results;
+
+  let prevEnd = 0;
+  for (const ni of numIdxs) {
+    const phraseTokens = tokens.slice(prevEnd, ni);
+    if (phraseTokens.length > 0) {
+      const phrase = phraseTokens.join(' ');
+      const num    = parseInt(tokens[ni], 10);
+      const item   = matchVoiceItem(phrase);
+      results.push({ phrase, num, item });
+    }
+    prevEnd = ni + 1;
+  }
+  return results;
+}
+
+let _voiceRec    = null;
+let _isListening = false;
+let _toastTimer  = null;
+
+function toggleVoice() {
+  _isListening ? stopVoice() : startVoice();
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    showVoiceToast([{ text: '&#9888; Voice not supported in this browser', cls: 'miss' }], '');
+    return;
+  }
+  _voiceRec = new SR();
+  _voiceRec.lang            = 'en-US';
+  _voiceRec.continuous      = false;
+  _voiceRec.interimResults  = false;
+  _voiceRec.maxAlternatives = 1;
+
+  _voiceRec.onstart  = () => { _isListening = true; document.body.classList.add('listening'); };
+  _voiceRec.onresult = (e) => processVoiceResult(e.results[0][0].transcript);
+  _voiceRec.onerror  = (e) => {
+    stopVoice();
+    if (e.error !== 'no-speech') showVoiceToast([{ text: '&#9888; ' + e.error, cls: 'miss' }], '');
+  };
+  _voiceRec.onend = () => stopVoice();
+  _voiceRec.start();
+}
+
+function stopVoice() {
+  _isListening = false;
+  document.body.classList.remove('listening');
+  if (_voiceRec) { try { _voiceRec.stop(); } catch(e) {} _voiceRec = null; }
+}
+
+function processVoiceResult(transcript) {
+  const parsed = parseVoiceTranscript(transcript);
+  const lines  = [];
+
+  if (parsed.length === 0) {
+    lines.push({ text: '?&nbsp; Nothing matched &mdash; try again', cls: 'miss' });
+  } else {
+    for (const { phrase, num, item } of parsed) {
+      if (item) {
+        onHaveInput(item, String(num));
+        const el = document.getElementById('input-' + safeId(item));
+        if (el) el.value = num;
+        lines.push({ text: '&#10003;&nbsp; ' + item + ' &rarr; ' + num, cls: 'hit' });
+      } else {
+        lines.push({ text: '?&nbsp; &ldquo;' + phrase + '&rdquo; &mdash; not matched', cls: 'miss' });
+      }
+    }
+  }
+  showVoiceToast(lines, transcript);
+}
+
+function showVoiceToast(lines, heard) {
+  const el = document.getElementById('voiceToast');
+  if (!el) return;
+  let h = heard ? '<div class="voice-heard">&ldquo;' + heard + '&rdquo;</div>' : '';
+  h += lines.map(l => '<div class="voice-toast-line ' + l.cls + '">' + l.text + '</div>').join('');
+  el.innerHTML = h;
+  el.classList.add('show');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+currentDay = detectToday();
+loadHave(currentDay);
+renderDayNav();
+selectDay(currentDay);
+</script>
+
+<div id="print-view"></div>
+
+<script>
+function printList() {
+  const pars = PAR_DATA[currentDay];
+  const COV = {"Monday":"Mon → Wed","Tuesday":"Tue → Thu","Wednesday":"Wed → Fri","Thursday":"Thu → Sat","Friday":"Fri → Sun","Saturday":"Sat → Mon","Sunday":"Sun → Tue"};
+  let blocks = '';
+
+  for (const stn in STATIONS) {
+    if (stn === "Soups") continue;
+    const items  = sortByTierAndPar(STATIONS[stn], pars);
+    const icon   = STATION_ICONS[stn] || '';
+    let rows = '<div class="pv-ch"><span>Item</span><span>Par</span><span>Have</span><span>Need</span><span></span></div>';
+
+    for (const item of items) {
+      const isBurr = item === "Burritos";
+      const par  = isBurr ? 12 : Math.ceil(pars[item] || 0);
+      const tier = getTier(pars[item] || 0, item);
+      const tlbl = tier==="FLAG"?"⚠" : tier==="ZERO"?"—" : tier==="F"?"FX" : tier;
+      let sub = PROXY_ITEMS.has(item) ? "proxy" : FLAGGED_ITEMS.has(item) ? "⚠" : NEAR_ZERO_ITEMS.has(item) ? "low" : "";
+
+      const have = haveValues[item];
+      let haveCell, needCell;
+      if (have !== undefined) {
+        const n = par - have;
+        haveCell = `<span class="pv-val">${have}</span>`;
+        needCell = n > 0 ? `<span class="pv-need-pos">+${n}</span>` : n < 0 ? `<span class="pv-need-neg">${n}</span>` : `<span class="pv-need-ok">✓</span>`;
+      } else {
+        haveCell = '<span class="pv-box"></span>';
+        needCell = '<span class="pv-box"></span>';
+      }
+
+      rows += `<div class="pv-row">
+        <div><div class="pv-nm">${item}</div>${sub?`<div class="pv-sb">${sub}</div>`:''}</div>
+        <div class="pv-par">${par}</div>
+        <div style="display:flex;align-items:center;justify-content:center;">${haveCell}</div>
+        <div style="display:flex;align-items:center;justify-content:center;">${needCell}</div>
+        <span class="pv-dot d${tier}">${tlbl}</span>
+      </div>`;
+    }
+
+    blocks += `<div class="pv-stn"><div class="pv-sname">${icon} ${stn}</div>${rows}</div>`;
+  }
+
+  document.getElementById('print-view').innerHTML =
+    `<div class="pv-top">
+      <div><div class="pv-title">FOH Prep List — ${currentDay}</div>
+      <div class="pv-sub">Covers ${COV[currentDay]} &nbsp;·&nbsp; Lazy Acres #1827 · Mission Hills</div></div>
+      <div style="font-size:7.5px;color:#bbb">v6.9</div>
+    </div>
+    <div class="pv-wlines">
+      <span><span class="pv-wlabel">Date:</span><span class="pv-wline"></span></span>
+      <span><span class="pv-wlabel">Prepped by:</span><span class="pv-wline"></span></span>
+    </div>
+    <div class="pv-cols">${blocks}</div>
+    <div class="pv-footer">
+      <span>FOH Predictive Par System v6.9</span>
+      <span>H = High(10+) &nbsp; M = Med(4–9) &nbsp; L = Low(&lt;4) &nbsp; FX = Fixed</span>
+    </div>`;
+
+  requestAnimationFrame(() => { requestAnimationFrame(() => { window.print(); }); });
+}
+</script>
+
+</body>
+</html>
