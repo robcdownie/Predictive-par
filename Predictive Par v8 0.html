@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Predictive Par">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%23046A38'/%3E%3Ctext x='90' y='122' font-size='92' text-anchor='middle'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
+
+<title>Predictive Par — Lazy Acres #1827</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --brand:    #046A38;   /* Lazy Acres emerald (official) */
+  --brand-dk: #024E29;
+  --gold:     #C6AA76;   /* Lazy Acres wheat gold (official) */
+  --gold-dk:  #A9894F;
+  --accent:   #C6AA76;
+  --harvest:  #B8860B;
+  --amber:    #B8860B;
+  --bg:       #F5F2E9;   /* warm cream */
+  --bg2:      #EDE8DA;
+  --card:     #FFFEFA;
+  --sep:      rgba(4,106,56,0.13);
+  --label:    #1F261D;
+  --label2:   rgba(31,38,29,0.58);
+  --label3:   rgba(31,38,29,0.32);
+  --blue:     #2E6E8E;
+  --green:    #046A38;
+  --orange:   #B8860B;
+  --red:      #B23A2E;
+  --purple:   #7A6A9E;
+  --gray:     #9A9485;
+  --radius:   14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  background:
+    radial-gradient(120% 60% at 100% 0%, rgba(4,106,56,0.09), transparent 60%),
+    radial-gradient(90% 50% at 0% 0%, rgba(198,170,118,0.12), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--label);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body.log-mode { padding-bottom: calc(96px + var(--safe-bot)); }
+
+/* ── Nav Bar ── */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(245,242,233,0.86);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border-bottom: 1px solid var(--sep);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset;
+  padding: 12px 16px 0;
+  padding-top: calc(12px + var(--safe-top));
+}
+
+.nav-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.nav-title {
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--brand);
+  line-height: 1.02;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.nav-title .leaf { flex-shrink: 0; transform: translateY(-1px); }
+
+.nav-subtitle {
+  font-size: 12px;
+  color: var(--label2);
+  font-weight: 500;
+  margin-top: 4px;
+  letter-spacing: 0.1px;
+}
+.fresh-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  background: rgba(4,106,56,0.08);
+  border: 1px solid rgba(4,106,56,0.22);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--brand-dk);
+  white-space: nowrap;
+}
+.fresh-stamp .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px rgba(198,170,118,0.30);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.nav-text-btn {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: inherit;
+}
+.nav-text-btn.danger { color: var(--red); display: none; }
+body.prep-mode .nav-text-btn.danger,
+body.log-mode  .nav-text-btn.danger { display: block; }
+
+/* ── Segmented controls: set + mode ── */
+.seg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.seg {
+  display: inline-flex;
+  background: rgba(60,60,67,0.08);
+  border-radius: 20px;
+  padding: 2px;
+  gap: 2px;
+}
+.seg button {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 17px;
+  color: var(--label2);
+  cursor: pointer;
+  letter-spacing: -0.1px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.seg button.active { background: var(--brand); color: #fff; }
+.seg.mode button.active { background: var(--gold-dk); }
+.seg button:active { opacity: 0.8; }
+
+/* ── Day Pills ── */
+.day-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 12px;
+}
+.day-scroll::-webkit-scrollbar { display: none; }
+
+.day-pill {
+  flex-shrink: 0;
+  padding: 6px 18px;
+  border-radius: 20px;
+  border: none;
+  background: rgba(60,60,67,0.08);
+  color: var(--label);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: -0.1px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  position: relative;
+}
+.day-pill.active {
+  background: var(--brand);
+  color: white;
+  font-weight: 600;
+}
+.day-pill.today::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+.day-pill:active { opacity: 0.7; }
+
+/* ── Log date row ── */
+.date-row { display: none; align-items: center; gap: 8px; padding-bottom: 12px; }
+body.log-mode .date-row { display: flex; }
+body.log-mode .day-scroll { display: none; }
+.date-pick {
+  font-family: inherit; font-size: 14px; font-weight: 600; color: var(--brand-dk);
+  background: rgba(4,106,56,0.08); border: 1px solid rgba(4,106,56,0.22);
+  border-radius: 10px; padding: 7px 11px; -webkit-appearance: none; appearance: none;
+}
+.nav-btn {
+  font-family: inherit; font-size: 14px; font-weight: 600; color: var(--brand);
+  background: none; border: none; padding: 6px 4px; cursor: pointer;
+}
+
+/* ── Info Strip ── */
+.info-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  color: var(--label2);
+  flex-wrap: wrap;
+}
+body.log-mode .info-strip { display: none; }
+
+.info-chip {
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(0,0,0,0.06);
+  color: var(--label2);
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+.info-chip.live {
+  background: rgba(255,149,0,0.14);
+  color: #B86A00;
+  font-weight: 600;
+}
+.info-chip.live.ok {
+  background: rgba(52,199,89,0.14);
+  color: #1A7A35;
+}
+.prep-chip {
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255,149,0,0.14);
+  color: var(--orange);
+  padding: 3px 9px;
+  border-radius: 6px;
+  display: none;
+}
+body.prep-mode .prep-chip { display: inline-block; }
+
+/* ── Log hint ── */
+.hint {
+  margin: 12px 16px 0; padding: 10px 13px; font-size: 12px; line-height: 1.5;
+  color: var(--brand-dk); background: rgba(4,106,56,0.06);
+  border: 1px solid rgba(4,106,56,0.16); border-radius: 12px;
+}
+.hint b { font-weight: 700; }
+
+/* ── Content ── */
+.content {
+  padding: 8px 16px calc(100px + var(--safe-bot));
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Section ── */
+.section { margin-bottom: 28px; }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 7px;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+}
+.section-label-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.section-label {
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brand);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.section-icon { margin-right: 5px; }
+.section-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label3);
+  letter-spacing: 0.2px;
+  display: none;
+}
+.section.collapsed .section-count { display: inline; }
+.section-chevron {
+  font-size: 11px;
+  color: var(--label3);
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+.section.collapsed .section-chevron { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid rgba(4,106,56,0.09);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 12px rgba(4,106,56,0.06), 0 1px 3px rgba(31,38,29,0.04);
+}
+
+/* ── Standard Item Row (Pars mode) ── */
+.item-row {
+  display: flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-bottom: 0.5px solid rgba(60,60,67,0.12);
+  min-height: 42px;
+  gap: 12px;
+}
+.item-row:last-child { border-bottom: none; }
+.item-info { flex: 1; min-width: 0; }
+.item-name {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--label);
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-name .flag-icon { color: var(--red); font-weight: 700; margin-right: 4px; }
+.item-name .near-zero-icon { color: var(--label3); margin-right: 4px; font-style: normal; }
+.item-sub { font-size: 11px; color: var(--label3); margin-top: 1px; }
+.item-avg {
+  font-size: 13px;
+  color: var(--label2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.par-badge-wrap { flex-shrink: 0; text-align: center; }
+.par-badge {
+  min-width: 40px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  display: inline-block;
+}
+.tier-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 2px;
+  letter-spacing: 0.4px;
+  display: none;     /* hidden for H/M/L — color carries it */
+}
+.tier-F  .tier-label,
+.tier-SELL .tier-label,
+.tier-FLAG .tier-label,
+.tier-ZERO .tier-label { display: block; }   /* only exceptions get labels */
+
+.tier-H .par-badge    { background: rgba(4,106,56,0.14);    color: #046A38; box-shadow: inset 0 0 0 1px rgba(4,106,56,0.24); }
+.tier-M .par-badge    { background: rgba(198,170,118,0.30);  color: #8A6D2F; box-shadow: inset 0 0 0 1px rgba(169,137,79,0.35); }
+.tier-L .par-badge    { background: rgba(154,148,133,0.16);  color: #6E685B; }
+.tier-F .par-badge    { background: rgba(122,106,158,0.16);  color: #5E5180; box-shadow: inset 0 0 0 1px rgba(122,106,158,0.24); }
+.tier-F .tier-label   { color: #5E5180; }
+.tier-SELL .par-badge { background: rgba(184,108,30,0.16);   color: #B26C1E; box-shadow: inset 0 0 0 1.5px rgba(184,108,30,0.45); }
+.tier-SELL .tier-label{ color: #B26C1E; font-weight: 700; }
+.tier-FLAG .par-badge { background: rgba(178,58,46,0.14);    color: var(--red); }
+.tier-FLAG .tier-label{ color: var(--red); }
+.tier-ZERO .par-badge { background: rgba(154,148,133,0.10);  color: var(--label3); }
+.tier-ZERO .tier-label{ color: var(--label3); }
+.tier-SELL .item-name::after {
+  content: "▲";
+  font-size: 8px;
+  color: #B26C1E;
+  margin-left: 5px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+
+/* ── Prep Mode ── */
+/* FOH 4 cols: Item | Par | Have | Need */
+.prep-col-header.prep-foh, .item-row-prep.prep-foh {
+  display: grid;
+  grid-template-columns: 1fr 44px 60px 56px;
+}
+/* Dinner 5 cols: Item | Par | Wall | Walk-in | Make */
+.prep-col-header.prep-din, .item-row-prep.prep-din {
+  display: grid;
+  grid-template-columns: 1fr 26px 50px 50px 46px;
+}
+.prep-col-header {
+  padding: 6px 12px;
+  gap: 6px;
+  background: rgba(60,60,67,0.04);
+  border-bottom: 0.5px solid var(--sep);
+}
+.prep-col {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--label2);
+  text-align: center;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+.prep-col:first-child { text-align: left; }
+.prep-col.wall   { color: #1A7A35; }
+.prep-col.walkin { color: #0058B8; }
+
+.item-row-prep {
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 0.5px solid var(--sep);
+  gap: 6px;
+  min-height: 56px;
+}
+.item-row-prep:last-child { border-bottom: none; }
+
+.prep-par {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+.prep-input {
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  border: 1.5px solid var(--sep);
+  border-radius: 8px;
+  padding: 11px 1px;
+  background: var(--bg);
+  color: var(--label);
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s, background 0.15s;
+}
+.prep-input.touched,
+.prep-input.have.touched {
+  background: rgba(52,199,89,0.10);
+  border-color: rgba(52,199,89,0.45);
+}
+.prep-input.wall.touched {
+  background: rgba(52,199,89,0.10);
+  border-color: rgba(52,199,89,0.45);
+}
+.prep-input.walkin.touched {
+  background: rgba(0,122,255,0.08);
+  border-color: rgba(0,122,255,0.40);
+}
+.prep-input:focus {
+  border-color: var(--blue);
+  background: white;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+.prep-need {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 8px;
+  padding: 11px 2px;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+.prep-need.positive { background: rgba(52,199,89,0.13); color: #1A7A35; }
+.prep-need.negative { background: rgba(255,59,48,0.12); color: var(--red); }
+.prep-need.zero     { background: rgba(52,199,89,0.08); color: #1A7A35; }
+.prep-need.empty    { color: var(--label3); font-weight: 500; }
+
+/* ── Log Mode rows ── */
+.log-row { padding: 11px 14px; border-bottom: 0.5px solid var(--sep); }
+.log-row:last-child { border-bottom: none; }
+.log-row.priority { background: rgba(184,108,30,0.05); }
+.log-row.np-set   { background: rgba(178,58,46,0.04); }
+.row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+.log-row .item-name { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
+.log-row .item-name .pri { font-size: 8px; color: var(--amber); margin-left: 5px; vertical-align: middle; }
+.spoil-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.spoil-label { font-size: 10px; color: var(--label2); text-transform: uppercase; letter-spacing: 0.3px; }
+.spoil-input {
+  width: 46px; font-family: inherit; font-size: 16px; font-weight: 600; text-align: center;
+  border: 1.5px solid var(--sep); border-radius: 8px; padding: 6px 2px; background: var(--bg);
+  color: var(--label); outline: none; -webkit-appearance: none; -moz-appearance: textfield;
+}
+.spoil-input:focus { border-color: var(--brand); background: #fff; }
+.spoil-input.has { background: rgba(178,58,46,0.08); border-color: rgba(178,58,46,0.4); color: var(--red); }
+
+.time-chips { display: flex; gap: 5px; }
+.chip {
+  flex: 1; font-family: inherit; font-size: 12px; font-weight: 600; text-align: center;
+  padding: 9px 2px; border-radius: 9px; border: 1.5px solid var(--sep);
+  background: var(--bg); color: var(--label2); cursor: pointer; transition: all 0.12s;
+  line-height: 1.1;
+}
+.chip small { display: block; font-size: 8px; font-weight: 500; opacity: 0.7; margin-top: 1px; letter-spacing: 0.1px; }
+.chip.sel[data-v="np"]     { background: rgba(31,38,29,0.10);   border-color: rgba(31,38,29,0.55); color: var(--label); }
+.chip.sel[data-v="early"]  { background: rgba(178,58,46,0.14);  border-color: var(--red);   color: var(--red); }
+.chip.sel[data-v="mid"]    { background: rgba(184,108,30,0.16); border-color: var(--amber); color: var(--amber); }
+.chip.sel[data-v="late"]   { background: rgba(198,170,118,0.22);border-color: var(--gold-dk);color: var(--gold-dk); }
+.chip.sel[data-v="lasted"] { background: rgba(4,106,56,0.14);   border-color: var(--brand); color: var(--brand); }
+
+/* ── Log footer bar ── */
+.footer-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+  background: rgba(245,242,233,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--sep); padding: 12px 16px calc(12px + var(--safe-bot));
+  display: none; gap: 10px; align-items: center;
+}
+body.log-mode .footer-bar { display: flex; }
+.summary-stat { flex: 1; font-size: 12px; color: var(--label2); line-height: 1.4; }
+.summary-stat b { color: var(--brand-dk); font-weight: 700; }
+.export-btn {
+  font-family: inherit; font-size: 15px; font-weight: 700; color: #fff; background: var(--brand);
+  border: none; border-radius: 999px; padding: 13px 22px; cursor: pointer; flex-shrink: 0;
+}
+.export-btn:active { transform: scale(0.97); }
+
+.toast {
+  position: fixed; bottom: calc(90px + var(--safe-bot)); left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--brand-dk); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 13px;
+  font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 200; max-width: 90%;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(31,38,29,0.5); z-index: 300;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--card); border-radius: 18px; max-width: 520px; width: 100%; max-height: 80vh;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.modal-head { padding: 16px 18px; border-bottom: 1px solid var(--sep); display: flex; justify-content: space-between; align-items: center; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--brand); }
+.modal-body { padding: 16px 18px; overflow-y: auto; }
+.modal pre {
+  font-family: ui-monospace,"SF Mono",Menlo,monospace; font-size: 11.5px; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word; color: var(--label);
+  background: var(--bg); padding: 12px; border-radius: 10px; border: 1px solid var(--sep);
+}
+.modal-foot { padding: 12px 18px calc(12px + var(--safe-bot)); display: flex; gap: 10px; }
+.modal-foot button {
+  flex: 1; font-family: inherit; font-size: 14px; font-weight: 700; padding: 12px; border-radius: 10px;
+  border: none; cursor: pointer;
+}
+.btn-copy { background: var(--brand); color: #fff; }
+.btn-close { background: rgba(31,38,29,0.08); color: var(--label); }
+
+/* ── Legend (collapsible) ── */
+.legend-toggle {
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 4px;
+  font-size: 12px;
+  color: var(--blue);
+  cursor: pointer;
+}
+.legend {
+  display: none;
+  gap: 14px;
+  justify-content: center;
+  padding: 10px 16px 14px;
+  flex-wrap: wrap;
+}
+.legend.open { display: flex; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--label2); }
+.legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+/* ── Notes ── */
+.notes-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--label2);
+  line-height: 1.65;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.05), 0 2px 10px rgba(0,0,0,0.04);
+  margin-top: 4px;
+}
+.notes-card strong { color: var(--label); font-weight: 600; }
+
+/* ── Print ── */
+#print-view { display: none; }
+
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .nav-bar, .info-strip, .content, .hint, .footer-bar, .toast, .modal-bg { display: none !important; }
+  #print-view { display: block !important; zoom: 0.9; }
+  body { background: white; margin: 0; padding: 0; font-family: -apple-system, Arial, sans-serif; }
+
+  /* Prep-order layout (two-column station cards, priority dots) */
+  .po-top   { text-align: center; padding: 8px 0 10px; border-bottom: 1.5px solid #E5E2DB; margin-bottom: 14px; }
+  .po-title { font-size: 21px; font-weight: 800; color: #1F2937; letter-spacing: 0.5px; }
+  .po-sub   { font-size: 10px; color: #5B6678; margin-top: 3px; font-weight: 500; }
+  .po-cols  { column-count: 2; column-gap: 16px; padding: 0 6px; }
+  .po-card  { break-inside: avoid; border: 1px solid #E3E1DB; border-radius: 6px; margin: 0 0 12px; overflow: hidden; background: #fff; }
+  .po-head  { background: #2A3447; color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 5px 11px; }
+  .po-row   { display: flex; align-items: center; gap: 8px; padding: 4px 11px; border-bottom: 1px solid #F0EEE8; }
+  .po-row:last-child { border-bottom: none; }
+  .po-dot   { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .po-t0 { background: #E2504C; } .po-t1 { background: #E8833A; }
+  .po-t2 { background: #F0C84B; } .po-t3 { background: #3DA46E; }
+  .po-nm    { font-size: 9.5px; font-weight: 500; color: #243042; flex: 1; line-height: 1.2; }
+  .po-qty   { font-size: 10.5px; font-weight: 800; color: #1F2937; }
+  .po-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 16px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #E5E2DB; font-size: 8px; color: #6B7280; font-weight: 500; }
+  .po-legend span { display: flex; align-items: center; gap: 5px; }
+  .po-brand { text-align: center; font-size: 6.5px; color: #C2BFB8; margin-top: 5px; }
+  @page { margin: 0.35in 0.35in; size: letter portrait; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-top">
+    <div>
+      <div class="nav-title"><svg class="leaf" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 21.5V8.5" stroke="#046A38" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M12 9.5c-1.6-2.4-4.6-3.1-6.4-2.9-.2 1.8.5 4.8 2.9 6.4 1.8 1.2 3.7.7 4.6.2.1-1.7-.4-3.1-1.1-3.7z" fill="#046A38"/><path d="M12 9.5c1.6-2.4 4.6-3.1 6.4-2.9.2 1.8-.5 4.8-2.9 6.4-1.8 1.2-3.7.7-4.6.2-.1-1.7.4-3.1 1.1-3.7z" fill="#5B9B6B"/><path d="M12 14c-1.2-1.8-3.4-2.3-4.7-2.2-.2 1.3.4 3.5 2.1 4.7 1.3.9 2.7.5 3.4.1.1-1.2-.3-2.2-.8-2.6z" fill="#C6AA76"/><path d="M12 14c1.2-1.8 3.4-2.3 4.7-2.2.2 1.3-.4 3.5-2.1 4.7-1.3.9-2.7.5-3.4.1-.1-1.2.3-2.2.8-2.6z" fill="#D8C193"/></svg>Predictive Par</div>
+      <div class="nav-subtitle">Lazy Acres #1827 &middot; Mission Hills</div>
+      <div class="fresh-stamp"><span class="dot"></span><span id="freshText"></span></div>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-text-btn" onclick="printList()">Print</button>
+      <button class="nav-text-btn danger" onclick="clearCurrent()">Clear</button>
+    </div>
+  </div>
+  <div class="seg-row">
+    <div class="seg" id="setSeg">
+      <button data-set="FOH">FOH</button>
+      <button data-set="Dinner">Dinner</button>
+    </div>
+    <div class="seg mode" id="modeSeg">
+      <button data-mode="pars">Pars</button>
+      <button data-mode="prep">Prep</button>
+      <button data-mode="log">Log</button>
+    </div>
+  </div>
+  <div class="day-scroll" id="dayNav"></div>
+  <div class="date-row">
+    <input type="date" class="date-pick" id="datePick" onchange="onDateChange()">
+    <button class="nav-btn" onclick="jumpToday()">Today</button>
+  </div>
+</div>
+
+<div class="info-strip">
+  <span class="info-chip" id="coverageLabel"></span>
+  <span class="info-chip live" id="liveStatChip">&mdash;</span>
+  <span class="prep-chip">PREP MODE</span>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<div class="footer-bar">
+  <div class="summary-stat" id="summary">Tap items as they sell out</div>
+  <button class="export-btn" onclick="openExport()">Export</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Day Summary</div>
+      <button class="nav-btn" onclick="closeModal()" style="font-size:20px;">&times;</button>
+    </div>
+    <div class="modal-body"><pre id="exportText"></pre></div>
+    <div class="modal-foot">
+      <button class="btn-copy" onclick="copyExport()">Copy</button>
+      <button class="btn-close" onclick="closeModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-view"></div>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// Predictive Par v8.0 — Lazy Acres #1827 · Dept 25
+// Unified FOH cold wall + Dinner set + Hole/Sellout Log
+// Built June 11, 2026 from FOH v7.10 (data refresh Jun 8, 2026),
+// Dinner Set v1.0 (data through May 17, 2026), Sellout Log v1.0.
+// ═══════════════════════════════════════════════════════════════════════════
+const VERSION = 'v8.0';
+
+// ── FRESHNESS STAMPS — bump these EVERY refresh (stale data = #1 failure mode)
+// FOH stamp derived from the Jun 8, 2026 refresh (Mon–Sun exports → week ending Sun Jun 7).
+const FRESH = {
+  FOH:    'Data through Jun 7, 2026',
+  Dinner: 'Data through May 17, 2026'
+};
+
+const DOW       = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DOW_SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DOW_COV   = {"Monday":"Mon → Wed","Tuesday":"Tue → Thu","Wednesday":"Wed → Fri","Thursday":"Thu → Sat","Friday":"Fri → Sun","Saturday":"Sat → Mon","Sunday":"Sun → Tue"};
+
+// ── Per-set data (extracted verbatim from the source dashboards) ────────────
+const DATA = {
+  FOH: {
+    label: 'FOH',
+    stations: /*FOH_STATIONS*/{"Breakfast":["Quiche Lorraine (slices)","Quiche Florentine (slices)","Burritos","Power OO","Cinnamon Apple OO","Blueberry OO","Strawberry OO","Dubai OO","PB&J OO","Hard Boiled Eggs (3pk)","Pork Tamale","Chicken Tamale","Veggie Tamale"],"Wraps & Sandwiches":["Roast Beef Wrap","Tuna Wrap","Chicken Caesar Wrap","Curry Wrap","Turkey Wrap","Ham Swiss Pretzel","Turkey Sandwich","Alt Sandwich"],"Protein Salads":["Tuna Salad","Rotisserie Chicken Salad","Egg Salad","Curry Chicken Salad","Green Machine Salad","Southwest Chicken Salad"],"Starch & Grain Salads":["Sesame Noodles","Broccoli Crunch Salad","Mushroom Arugula Cous Cous","Natural Potato Salad","Macaroni Salad","Mediterranean Chickpea","Asparagus Artichoke Salad","Turkish Garbanzo Bean Salad","New Beet Salad","Greek Orzo Salad","Romanesco Quinoa Salad","Coleslaw","Banh Mi Salad","Pesto Pasta Salad","Greek Farro Salad","Thai Cabbage Salad","Vegan Pesto Pasta Salad"],"24oz Salads":["Spinach Pasta Salad","Quinoa Detox Salad","Kale Recharge Salad"],"End Cap":["Shredded Chicken","Tofu","Brisket"],"Soups":["Chicken Noodle","Lemon Chicken Orzo","Matzo Ball Soup","Chicken Tortilla","Minestrone","Chicken Enchilada Soup","New England Clam Chowder","Tomato Bisque (MWO)","Spring Vegetable","Maine Lobster Bisque","Wild Mushroom Bisque","Broccoli Cheese","Route 66 Chili","Russian Cabbage","Tomato Basil Bisque","Split Pea"]},
+    icons: {"Breakfast":"🌅","Wraps & Sandwiches":"🥪","Protein Salads":"🥗","Starch & Grain Salads":"🥣","24oz Salads":"🫙","End Cap":"🧊","Soups":"🍲"},
+    par: /*FOH_PAR*/{"Monday":{"Quiche Lorraine (slices)":4,"Quiche Florentine (slices)":3,"Power OO":18,"Cinnamon Apple OO":6,"Blueberry OO":3,"Strawberry OO":12,"Dubai OO":1,"PB&J OO":2,"Hard Boiled Eggs (3pk)":7,"Pork Tamale":3,"Chicken Tamale":5,"Veggie Tamale":3,"Burritos":12,"Roast Beef Wrap":8,"Tuna Wrap":7,"Chicken Caesar Wrap":20,"Curry Wrap":18,"Turkey Wrap":16,"Ham Swiss Pretzel":5,"Turkey Sandwich":10,"Alt Sandwich":10,"Tuna Salad":34,"Rotisserie Chicken Salad":15,"Egg Salad":6,"Curry Chicken Salad":15,"Green Machine Salad":14,"Southwest Chicken Salad":7,"Sesame Noodles":25,"Broccoli Crunch Salad":8,"Mushroom Arugula Cous Cous":15,"Natural Potato Salad":8,"Macaroni Salad":7,"Mediterranean Chickpea":5,"Asparagus Artichoke Salad":8,"Turkish Garbanzo Bean Salad":5,"New Beet Salad":7,"Greek Orzo Salad":9,"Romanesco Quinoa Salad":5,"Coleslaw":7,"Banh Mi Salad":8,"Pesto Pasta Salad":2,"Greek Farro Salad":7,"Thai Cabbage Salad":8,"Vegan Pesto Pasta Salad":1,"Spinach Pasta Salad":8,"Quinoa Detox Salad":4,"Kale Recharge Salad":14,"Shredded Chicken":29,"Tofu":8,"Brisket":5,"Chicken Noodle":34,"Lemon Chicken Orzo":4,"Matzo Ball Soup":2,"Chicken Tortilla":6,"Minestrone":1,"Chicken Enchilada Soup":3,"New England Clam Chowder":5,"Tomato Bisque (MWO)":3,"Spring Vegetable":4,"Maine Lobster Bisque":2,"Wild Mushroom Bisque":2,"Broccoli Cheese":1,"Route 66 Chili":4,"Russian Cabbage":3,"Tomato Basil Bisque":6,"Split Pea":1},"Tuesday":{"Quiche Lorraine (slices)":3,"Quiche Florentine (slices)":3,"Power OO":16,"Cinnamon Apple OO":7,"Blueberry OO":3,"Strawberry OO":13,"Dubai OO":1,"PB&J OO":2,"Hard Boiled Eggs (3pk)":7,"Pork Tamale":4,"Chicken Tamale":5,"Veggie Tamale":3,"Burritos":12,"Roast Beef Wrap":6,"Tuna Wrap":6,"Chicken Caesar Wrap":21,"Curry Wrap":17,"Turkey Wrap":15,"Ham Swiss Pretzel":4,"Turkey Sandwich":10,"Alt Sandwich":10,"Tuna Salad":32,"Rotisserie Chicken Salad":14,"Egg Salad":8,"Curry Chicken Salad":15,"Green Machine Salad":14,"Southwest Chicken Salad":8,"Sesame Noodles":27,"Broccoli Crunch Salad":8,"Mushroom Arugula Cous Cous":17,"Natural Potato Salad":9,"Macaroni Salad":9,"Mediterranean Chickpea":6,"Asparagus Artichoke Salad":9,"Turkish Garbanzo Bean Salad":3,"New Beet Salad":7,"Greek Orzo Salad":7,"Romanesco Quinoa Salad":4,"Coleslaw":7,"Banh Mi Salad":6,"Pesto Pasta Salad":2,"Greek Farro Salad":7,"Thai Cabbage Salad":8,"Vegan Pesto Pasta Salad":3,"Spinach Pasta Salad":11,"Quinoa Detox Salad":3,"Kale Recharge Salad":14,"Shredded Chicken":21,"Tofu":6,"Brisket":3,"Chicken Noodle":30,"Lemon Chicken Orzo":7,"Matzo Ball Soup":3,"Chicken Tortilla":5,"Minestrone":1,"Chicken Enchilada Soup":3,"New England Clam Chowder":4,"Tomato Bisque (MWO)":3,"Spring Vegetable":5,"Maine Lobster Bisque":2,"Wild Mushroom Bisque":3,"Broccoli Cheese":2,"Route 66 Chili":3,"Russian Cabbage":2,"Tomato Basil Bisque":4,"Split Pea":1},"Wednesday":{"Quiche Lorraine (slices)":3,"Quiche Florentine (slices)":3,"Power OO":12,"Cinnamon Apple OO":9,"Blueberry OO":3,"Strawberry OO":15,"Dubai OO":1,"PB&J OO":1,"Hard Boiled Eggs (3pk)":6,"Pork Tamale":4,"Chicken Tamale":5,"Veggie Tamale":2,"Burritos":12,"Roast Beef Wrap":7,"Tuna Wrap":5,"Chicken Caesar Wrap":18,"Curry Wrap":17,"Turkey Wrap":18,"Ham Swiss Pretzel":3,"Turkey Sandwich":10,"Alt Sandwich":12,"Tuna Salad":32,"Rotisserie Chicken Salad":15,"Egg Salad":10,"Curry Chicken Salad":16,"Green Machine Salad":14,"Southwest Chicken Salad":9,"Sesame Noodles":29,"Broccoli Crunch Salad":6,"Mushroom Arugula Cous Cous":16,"Natural Potato Salad":12,"Macaroni Salad":12,"Mediterranean Chickpea":6,"Asparagus Artichoke Salad":10,"Turkish Garbanzo Bean Salad":4,"New Beet Salad":8,"Greek Orzo Salad":7,"Romanesco Quinoa Salad":5,"Coleslaw":7,"Banh Mi Salad":7,"Pesto Pasta Salad":3,"Greek Farro Salad":8,"Thai Cabbage Salad":7,"Vegan Pesto Pasta Salad":4,"Spinach Pasta Salad":13,"Quinoa Detox Salad":4,"Kale Recharge Salad":12,"Shredded Chicken":20,"Tofu":8,"Brisket":3,"Chicken Noodle":27,"Lemon Chicken Orzo":10,"Matzo Ball Soup":5,"Chicken Tortilla":4,"Minestrone":1,"Chicken Enchilada Soup":4,"New England Clam Chowder":4,"Tomato Bisque (MWO)":2,"Spring Vegetable":4,"Maine Lobster Bisque":3,"Wild Mushroom Bisque":3,"Broccoli Cheese":2,"Route 66 Chili":4,"Russian Cabbage":2,"Tomato Basil Bisque":4,"Split Pea":1},"Thursday":{"Quiche Lorraine (slices)":3,"Quiche Florentine (slices)":4,"Power OO":10,"Cinnamon Apple OO":8,"Blueberry OO":4,"Strawberry OO":13,"Dubai OO":1,"PB&J OO":1,"Hard Boiled Eggs (3pk)":5,"Pork Tamale":4,"Chicken Tamale":6,"Veggie Tamale":3,"Burritos":12,"Roast Beef Wrap":7,"Tuna Wrap":7,"Chicken Caesar Wrap":16,"Curry Wrap":19,"Turkey Wrap":19,"Ham Swiss Pretzel":3,"Turkey Sandwich":10,"Alt Sandwich":12,"Tuna Salad":28,"Rotisserie Chicken Salad":14,"Egg Salad":8,"Curry Chicken Salad":15,"Green Machine Salad":11,"Southwest Chicken Salad":6,"Sesame Noodles":26,"Broccoli Crunch Salad":4,"Mushroom Arugula Cous Cous":15,"Natural Potato Salad":13,"Macaroni Salad":12,"Mediterranean Chickpea":6,"Asparagus Artichoke Salad":9,"Turkish Garbanzo Bean Salad":4,"New Beet Salad":7,"Greek Orzo Salad":8,"Romanesco Quinoa Salad":6,"Coleslaw":6,"Banh Mi Salad":7,"Pesto Pasta Salad":3,"Greek Farro Salad":7,"Thai Cabbage Salad":7,"Vegan Pesto Pasta Salad":5,"Spinach Pasta Salad":16,"Quinoa Detox Salad":4,"Kale Recharge Salad":11,"Shredded Chicken":22,"Tofu":7,"Brisket":4,"Chicken Noodle":25,"Lemon Chicken Orzo":11,"Matzo Ball Soup":5,"Chicken Tortilla":3,"Minestrone":2,"Chicken Enchilada Soup":4,"New England Clam Chowder":4,"Tomato Bisque (MWO)":1,"Spring Vegetable":2,"Maine Lobster Bisque":3,"Wild Mushroom Bisque":2,"Broccoli Cheese":2,"Route 66 Chili":3,"Russian Cabbage":2,"Tomato Basil Bisque":4,"Split Pea":0},"Friday":{"Quiche Lorraine (slices)":4,"Quiche Florentine (slices)":4,"Power OO":10,"Cinnamon Apple OO":8,"Blueberry OO":4,"Strawberry OO":12,"Dubai OO":1,"PB&J OO":1,"Hard Boiled Eggs (3pk)":5,"Pork Tamale":4,"Chicken Tamale":6,"Veggie Tamale":2,"Burritos":12,"Roast Beef Wrap":7,"Tuna Wrap":9,"Chicken Caesar Wrap":16,"Curry Wrap":18,"Turkey Wrap":19,"Ham Swiss Pretzel":5,"Turkey Sandwich":10,"Alt Sandwich":12,"Tuna Salad":28,"Rotisserie Chicken Salad":15,"Egg Salad":7,"Curry Chicken Salad":14,"Green Machine Salad":10,"Southwest Chicken Salad":5,"Sesame Noodles":27,"Broccoli Crunch Salad":3,"Mushroom Arugula Cous Cous":14,"Natural Potato Salad":13,"Macaroni Salad":12,"Mediterranean Chickpea":6,"Asparagus Artichoke Salad":9,"Turkish Garbanzo Bean Salad":6,"New Beet Salad":6,"Greek Orzo Salad":9,"Romanesco Quinoa Salad":7,"Coleslaw":8,"Banh Mi Salad":7,"Pesto Pasta Salad":5,"Greek Farro Salad":8,"Thai Cabbage Salad":7,"Vegan Pesto Pasta Salad":4,"Spinach Pasta Salad":15,"Quinoa Detox Salad":5,"Kale Recharge Salad":10,"Shredded Chicken":32,"Tofu":9,"Brisket":8,"Chicken Noodle":24,"Lemon Chicken Orzo":8,"Matzo Ball Soup":4,"Chicken Tortilla":3,"Minestrone":2,"Chicken Enchilada Soup":4,"New England Clam Chowder":6,"Tomato Bisque (MWO)":1,"Spring Vegetable":1,"Maine Lobster Bisque":3,"Wild Mushroom Bisque":2,"Broccoli Cheese":2,"Route 66 Chili":4,"Russian Cabbage":3,"Tomato Basil Bisque":3,"Split Pea":1},"Saturday":{"Quiche Lorraine (slices)":4,"Quiche Florentine (slices)":3,"Power OO":13,"Cinnamon Apple OO":7,"Blueberry OO":4,"Strawberry OO":11,"Dubai OO":1,"PB&J OO":1,"Hard Boiled Eggs (3pk)":5,"Pork Tamale":4,"Chicken Tamale":6,"Veggie Tamale":3,"Burritos":12,"Roast Beef Wrap":8,"Tuna Wrap":10,"Chicken Caesar Wrap":15,"Curry Wrap":21,"Turkey Wrap":19,"Ham Swiss Pretzel":6,"Turkey Sandwich":10,"Alt Sandwich":11,"Tuna Salad":32,"Rotisserie Chicken Salad":15,"Egg Salad":5,"Curry Chicken Salad":15,"Green Machine Salad":12,"Southwest Chicken Salad":4,"Sesame Noodles":22,"Broccoli Crunch Salad":5,"Mushroom Arugula Cous Cous":13,"Natural Potato Salad":12,"Macaroni Salad":11,"Mediterranean Chickpea":5,"Asparagus Artichoke Salad":7,"Turkish Garbanzo Bean Salad":8,"New Beet Salad":7,"Greek Orzo Salad":10,"Romanesco Quinoa Salad":7,"Coleslaw":8,"Banh Mi Salad":8,"Pesto Pasta Salad":4,"Greek Farro Salad":8,"Thai Cabbage Salad":8,"Vegan Pesto Pasta Salad":3,"Spinach Pasta Salad":16,"Quinoa Detox Salad":7,"Kale Recharge Salad":10,"Shredded Chicken":37,"Tofu":9,"Brisket":9,"Chicken Noodle":32,"Lemon Chicken Orzo":6,"Matzo Ball Soup":3,"Chicken Tortilla":4,"Minestrone":2,"Chicken Enchilada Soup":3,"New England Clam Chowder":7,"Tomato Bisque (MWO)":1,"Spring Vegetable":2,"Maine Lobster Bisque":2,"Wild Mushroom Bisque":2,"Broccoli Cheese":1,"Route 66 Chili":4,"Russian Cabbage":3,"Tomato Basil Bisque":5,"Split Pea":1},"Sunday":{"Quiche Lorraine (slices)":4,"Quiche Florentine (slices)":3,"Power OO":15,"Cinnamon Apple OO":7,"Blueberry OO":3,"Strawberry OO":11,"Dubai OO":1,"PB&J OO":2,"Hard Boiled Eggs (3pk)":7,"Pork Tamale":3,"Chicken Tamale":6,"Veggie Tamale":2,"Burritos":12,"Roast Beef Wrap":9,"Tuna Wrap":10,"Chicken Caesar Wrap":20,"Curry Wrap":21,"Turkey Wrap":15,"Ham Swiss Pretzel":7,"Turkey Sandwich":10,"Alt Sandwich":9,"Tuna Salad":32,"Rotisserie Chicken Salad":15,"Egg Salad":5,"Curry Chicken Salad":15,"Green Machine Salad":13,"Southwest Chicken Salad":5,"Sesame Noodles":24,"Broccoli Crunch Salad":6,"Mushroom Arugula Cous Cous":12,"Natural Potato Salad":8,"Macaroni Salad":8,"Mediterranean Chickpea":5,"Asparagus Artichoke Salad":8,"Turkish Garbanzo Bean Salad":7,"New Beet Salad":6,"Greek Orzo Salad":9,"Romanesco Quinoa Salad":6,"Coleslaw":8,"Banh Mi Salad":8,"Pesto Pasta Salad":3,"Greek Farro Salad":7,"Thai Cabbage Salad":8,"Vegan Pesto Pasta Salad":1,"Spinach Pasta Salad":11,"Quinoa Detox Salad":6,"Kale Recharge Salad":13,"Shredded Chicken":38,"Tofu":9,"Brisket":8,"Chicken Noodle":32,"Lemon Chicken Orzo":5,"Matzo Ball Soup":2,"Chicken Tortilla":5,"Minestrone":2,"Chicken Enchilada Soup":3,"New England Clam Chowder":6,"Tomato Bisque (MWO)":2,"Spring Vegetable":3,"Maine Lobster Bisque":3,"Wild Mushroom Bisque":2,"Broccoli Cheese":1,"Route 66 Chili":4,"Russian Cabbage":3,"Tomato Basil Bisque":6,"Split Pea":1}},
+    avg: /*FOH_AVG*/{"Monday":{"Quiche Lorraine (slices)":0.92,"Quiche Florentine (slices)":0.98,"Power OO":5.11,"Cinnamon Apple OO":1.78,"Blueberry OO":0.78,"Strawberry OO":3.67,"Dubai OO":0.11,"PB&J OO":0.11,"Hard Boiled Eggs (3pk)":2,"Pork Tamale":0.67,"Chicken Tamale":1.56,"Veggie Tamale":1,"Burritos":"fixed","Roast Beef Wrap":3.56,"Tuna Wrap":2.89,"Chicken Caesar Wrap":5,"Curry Wrap":6.78,"Turkey Wrap":5.22,"Ham Swiss Pretzel":2,"Turkey Sandwich":"fixed","Alt Sandwich":2.89,"Tuna Salad":11.15,"Rotisserie Chicken Salad":4.62,"Egg Salad":0.54,"Curry Chicken Salad":4.59,"Green Machine Salad":4.33,"Southwest Chicken Salad":1.11,"Sesame Noodles":5.95,"Broccoli Crunch Salad":1.86,"Mushroom Arugula Cous Cous":2.68,"Natural Potato Salad":2.25,"Macaroni Salad":2.37,"Mediterranean Chickpea":0.83,"Asparagus Artichoke Salad":1.99,"Turkish Garbanzo Bean Salad":2.6,"New Beet Salad":2.63,"Greek Orzo Salad":3.16,"Romanesco Quinoa Salad":1.7,"Coleslaw":1.84,"Banh Mi Salad":2.87,"Pesto Pasta Salad":0.76,"Greek Farro Salad":1.61,"Thai Cabbage Salad":1.93,"Vegan Pesto Pasta Salad":0.08,"Spinach Pasta Salad":3.55,"Quinoa Detox Salad":2.18,"Kale Recharge Salad":3.02,"Shredded Chicken":12.39,"Tofu":2.53,"Brisket":2.25,"Chicken Noodle":12.11,"Lemon Chicken Orzo":1.78,"Matzo Ball Soup":0.11,"Chicken Tortilla":1.78,"Minestrone":0.44,"Chicken Enchilada Soup":0.33,"New England Clam Chowder":1.67,"Tomato Bisque (MWO)":0.33,"Spring Vegetable":0.56,"Maine Lobster Bisque":0.67,"Wild Mushroom Bisque":0.33,"Broccoli Cheese":0,"Route 66 Chili":1.22,"Russian Cabbage":1.11,"Tomato Basil Bisque":2.78,"Split Pea":0},"Tuesday":{"Quiche Lorraine (slices)":0.9,"Quiche Florentine (slices)":0.53,"Power OO":5.56,"Cinnamon Apple OO":1.11,"Blueberry OO":0.44,"Strawberry OO":2.89,"Dubai OO":0.11,"PB&J OO":0.67,"Hard Boiled Eggs (3pk)":1.96,"Pork Tamale":0.89,"Chicken Tamale":1.44,"Veggie Tamale":0.56,"Burritos":"fixed","Roast Beef Wrap":1.89,"Tuna Wrap":2.22,"Chicken Caesar Wrap":7.33,"Curry Wrap":5.22,"Turkey Wrap":3.33,"Ham Swiss Pretzel":1.78,"Turkey Sandwich":"fixed","Alt Sandwich":2.44,"Tuna Salad":7.95,"Rotisserie Chicken Salad":4.04,"Egg Salad":1.59,"Curry Chicken Salad":4,"Green Machine Salad":2.89,"Southwest Chicken Salad":1.89,"Sesame Noodles":7.78,"Broccoli Crunch Salad":2.46,"Mushroom Arugula Cous Cous":4.16,"Natural Potato Salad":1.21,"Macaroni Salad":0.68,"Mediterranean Chickpea":1.66,"Asparagus Artichoke Salad":2.26,"Turkish Garbanzo Bean Salad":0.75,"New Beet Salad":0.83,"Greek Orzo Salad":2.25,"Romanesco Quinoa Salad":1.07,"Coleslaw":1.77,"Banh Mi Salad":1.37,"Pesto Pasta Salad":0.13,"Greek Farro Salad":1.49,"Thai Cabbage Salad":2.31,"Vegan Pesto Pasta Salad":0,"Spinach Pasta Salad":0.54,"Quinoa Detox Salad":0.36,"Kale Recharge Salad":5.46,"Shredded Chicken":8.05,"Tofu":1.41,"Brisket":1,"Chicken Noodle":8.44,"Lemon Chicken Orzo":1.11,"Matzo Ball Soup":0.22,"Chicken Tortilla":1.78,"Minestrone":0.11,"Chicken Enchilada Soup":0.67,"New England Clam Chowder":0.89,"Tomato Bisque (MWO)":0.89,"Spring Vegetable":1.22,"Maine Lobster Bisque":0.67,"Wild Mushroom Bisque":0.33,"Broccoli Cheese":0.33,"Route 66 Chili":0.89,"Russian Cabbage":0.33,"Tomato Basil Bisque":1.33,"Split Pea":0},"Wednesday":{"Quiche Lorraine (slices)":0.92,"Quiche Florentine (slices)":0.84,"Power OO":5.11,"Cinnamon Apple OO":1.89,"Blueberry OO":1.11,"Strawberry OO":4.22,"Dubai OO":0.33,"PB&J OO":0.22,"Hard Boiled Eggs (3pk)":1.81,"Pork Tamale":1.11,"Chicken Tamale":1.33,"Veggie Tamale":0.44,"Burritos":"fixed","Roast Beef Wrap":1.11,"Tuna Wrap":1,"Chicken Caesar Wrap":5.44,"Curry Wrap":3.56,"Turkey Wrap":5.56,"Ham Swiss Pretzel":0.33,"Turkey Sandwich":"fixed","Alt Sandwich":3.67,"Tuna Salad":11.16,"Rotisserie Chicken Salad":4.54,"Egg Salad":3.23,"Curry Chicken Salad":4.19,"Green Machine Salad":4.67,"Southwest Chicken Salad":3.22,"Sesame Noodles":8.87,"Broccoli Crunch Salad":2.19,"Mushroom Arugula Cous Cous":5.95,"Natural Potato Salad":2.93,"Macaroni Salad":3.06,"Mediterranean Chickpea":1.55,"Asparagus Artichoke Salad":2.73,"Turkish Garbanzo Bean Salad":1.02,"New Beet Salad":2.43,"Greek Orzo Salad":2.28,"Romanesco Quinoa Salad":1.25,"Coleslaw":2.35,"Banh Mi Salad":2.33,"Pesto Pasta Salad":0.8,"Greek Farro Salad":2.48,"Thai Cabbage Salad":2.3,"Vegan Pesto Pasta Salad":0.68,"Spinach Pasta Salad":2.95,"Quinoa Detox Salad":0.54,"Kale Recharge Salad":4.11,"Shredded Chicken":5.62,"Tofu":2.43,"Brisket":0.6,"Chicken Noodle":9.56,"Lemon Chicken Orzo":0.44,"Matzo Ball Soup":1.11,"Chicken Tortilla":1.78,"Minestrone":0,"Chicken Enchilada Soup":0.89,"New England Clam Chowder":1.11,"Tomato Bisque (MWO)":0.89,"Spring Vegetable":1.44,"Maine Lobster Bisque":0.33,"Wild Mushroom Bisque":1,"Broccoli Cheese":0.56,"Route 66 Chili":1,"Russian Cabbage":0.56,"Tomato Basil Bisque":1.22,"Split Pea":0.22},"Thursday":{"Quiche Lorraine (slices)":0.77,"Quiche Florentine (slices)":0.66,"Power OO":3,"Cinnamon Apple OO":2.89,"Blueberry OO":0.44,"Strawberry OO":3.89,"Dubai OO":0.22,"PB&J OO":0.11,"Hard Boiled Eggs (3pk)":1.78,"Pork Tamale":1.44,"Chicken Tamale":1,"Veggie Tamale":1.11,"Burritos":"fixed","Roast Beef Wrap":2.22,"Tuna Wrap":1.33,"Chicken Caesar Wrap":5.56,"Curry Wrap":6.44,"Turkey Wrap":4.33,"Ham Swiss Pretzel":0.78,"Turkey Sandwich":"fixed","Alt Sandwich":2.89,"Tuna Salad":9.5,"Rotisserie Chicken Salad":3.81,"Egg Salad":2.23,"Curry Chicken Salad":5.31,"Green Machine Salad":4.44,"Southwest Chicken Salad":2.11,"Sesame Noodles":7.06,"Broccoli Crunch Salad":1.8,"Mushroom Arugula Cous Cous":4.47,"Natural Potato Salad":3.37,"Macaroni Salad":4.24,"Mediterranean Chickpea":1.77,"Asparagus Artichoke Salad":3.1,"Turkish Garbanzo Bean Salad":0.89,"New Beet Salad":2.36,"Greek Orzo Salad":1.69,"Romanesco Quinoa Salad":1.3,"Coleslaw":1.85,"Banh Mi Salad":1.7,"Pesto Pasta Salad":0.07,"Greek Farro Salad":2.23,"Thai Cabbage Salad":2.43,"Vegan Pesto Pasta Salad":1.56,"Spinach Pasta Salad":5.81,"Quinoa Detox Salad":1.64,"Kale Recharge Salad":3.06,"Shredded Chicken":4.66,"Tofu":1.53,"Brisket":0.47,"Chicken Noodle":9,"Lemon Chicken Orzo":4,"Matzo Ball Soup":1.33,"Chicken Tortilla":0.67,"Minestrone":0.11,"Chicken Enchilada Soup":0.89,"New England Clam Chowder":1,"Tomato Bisque (MWO)":0.44,"Spring Vegetable":1.11,"Maine Lobster Bisque":0.67,"Wild Mushroom Bisque":0.56,"Broccoli Cheese":0.56,"Route 66 Chili":0.56,"Russian Cabbage":0.11,"Tomato Basil Bisque":0.89,"Split Pea":0},"Friday":{"Quiche Lorraine (slices)":0.5,"Quiche Florentine (slices)":1.19,"Power OO":2.56,"Cinnamon Apple OO":2.56,"Blueberry OO":1,"Strawberry OO":5,"Dubai OO":0.22,"PB&J OO":0.22,"Hard Boiled Eggs (3pk)":1.22,"Pork Tamale":1,"Chicken Tamale":1.67,"Veggie Tamale":0.22,"Burritos":"fixed","Roast Beef Wrap":2.78,"Tuna Wrap":2.11,"Chicken Caesar Wrap":5.33,"Curry Wrap":4.67,"Turkey Wrap":5.78,"Ham Swiss Pretzel":0.89,"Turkey Sandwich":"fixed","Alt Sandwich":3.89,"Tuna Salad":7.96,"Rotisserie Chicken Salad":4.58,"Egg Salad":2.78,"Curry Chicken Salad":4.38,"Green Machine Salad":3.11,"Southwest Chicken Salad":2,"Sesame Noodles":9.88,"Broccoli Crunch Salad":0.87,"Mushroom Arugula Cous Cous":3.82,"Natural Potato Salad":3.76,"Macaroni Salad":2.81,"Mediterranean Chickpea":2.01,"Asparagus Artichoke Salad":2.97,"Turkish Garbanzo Bean Salad":0.89,"New Beet Salad":2,"Greek Orzo Salad":2.24,"Romanesco Quinoa Salad":1.71,"Coleslaw":1.69,"Banh Mi Salad":2.1,"Pesto Pasta Salad":1.08,"Greek Farro Salad":1.72,"Thai Cabbage Salad":1.3,"Vegan Pesto Pasta Salad":1.37,"Spinach Pasta Salad":3.05,"Quinoa Detox Salad":0.64,"Kale Recharge Salad":3.3,"Shredded Chicken":7.24,"Tofu":2.58,"Brisket":1.19,"Chicken Noodle":5.56,"Lemon Chicken Orzo":3.78,"Matzo Ball Soup":1.33,"Chicken Tortilla":1.11,"Minestrone":0.44,"Chicken Enchilada Soup":1.56,"New England Clam Chowder":0.67,"Tomato Bisque (MWO)":0,"Spring Vegetable":0.22,"Maine Lobster Bisque":1,"Wild Mushroom Bisque":0.44,"Broccoli Cheese":0.33,"Route 66 Chili":1.22,"Russian Cabbage":0.56,"Tomato Basil Bisque":1.11,"Split Pea":0},"Saturday":{"Quiche Lorraine (slices)":1.11,"Quiche Florentine (slices)":1.06,"Power OO":3.44,"Cinnamon Apple OO":1.56,"Blueberry OO":1.67,"Strawberry OO":2.56,"Dubai OO":0,"PB&J OO":0.22,"Hard Boiled Eggs (3pk)":0.74,"Pork Tamale":1,"Chicken Tamale":1.89,"Veggie Tamale":0.78,"Burritos":"fixed","Roast Beef Wrap":1.11,"Tuna Wrap":2.22,"Chicken Caesar Wrap":3.33,"Curry Wrap":5.33,"Turkey Wrap":6.67,"Ham Swiss Pretzel":0.89,"Turkey Sandwich":"fixed","Alt Sandwich":3.44,"Tuna Salad":7.54,"Rotisserie Chicken Salad":3.79,"Egg Salad":1.8,"Curry Chicken Salad":3.69,"Green Machine Salad":2,"Southwest Chicken Salad":1.11,"Sesame Noodles":6.33,"Broccoli Crunch Salad":0.74,"Mushroom Arugula Cous Cous":4.68,"Natural Potato Salad":4.17,"Macaroni Salad":3.81,"Mediterranean Chickpea":1.52,"Asparagus Artichoke Salad":2.05,"Turkish Garbanzo Bean Salad":1.22,"New Beet Salad":1.52,"Greek Orzo Salad":2.69,"Romanesco Quinoa Salad":1.75,"Coleslaw":1.91,"Banh Mi Salad":1.68,"Pesto Pasta Salad":1.22,"Greek Farro Salad":1.93,"Thai Cabbage Salad":1.87,"Vegan Pesto Pasta Salad":1.26,"Spinach Pasta Salad":5.07,"Quinoa Detox Salad":0.92,"Kale Recharge Salad":2.74,"Shredded Chicken":7.61,"Tofu":1.77,"Brisket":1.5,"Chicken Noodle":8,"Lemon Chicken Orzo":1.89,"Matzo Ball Soup":1.11,"Chicken Tortilla":0.78,"Minestrone":0.44,"Chicken Enchilada Soup":0.78,"New England Clam Chowder":1.89,"Tomato Bisque (MWO)":0,"Spring Vegetable":0.33,"Maine Lobster Bisque":0.33,"Wild Mushroom Bisque":0.44,"Broccoli Cheese":0.67,"Route 66 Chili":0.33,"Russian Cabbage":0.56,"Tomato Basil Bisque":0.78,"Split Pea":0},"Sunday":{"Quiche Lorraine (slices)":1.22,"Quiche Florentine (slices)":0.68,"Power OO":2.89,"Cinnamon Apple OO":2.78,"Blueberry OO":0.78,"Strawberry OO":3.22,"Dubai OO":0.22,"PB&J OO":0.22,"Hard Boiled Eggs (3pk)":1.78,"Pork Tamale":1.11,"Chicken Tamale":1.78,"Veggie Tamale":0.22,"Burritos":"fixed","Roast Beef Wrap":2.44,"Tuna Wrap":3.22,"Chicken Caesar Wrap":5,"Curry Wrap":6.22,"Turkey Wrap":4.67,"Ham Swiss Pretzel":2.11,"Turkey Sandwich":"fixed","Alt Sandwich":2.78,"Tuna Salad":9.95,"Rotisserie Chicken Salad":4.72,"Egg Salad":1.63,"Curry Chicken Salad":4.59,"Green Machine Salad":3.78,"Southwest Chicken Salad":1.22,"Sesame Noodles":7.59,"Broccoli Crunch Salad":1.11,"Mushroom Arugula Cous Cous":3.78,"Natural Potato Salad":3.64,"Macaroni Salad":3.63,"Mediterranean Chickpea":1.46,"Asparagus Artichoke Salad":2.29,"Turkish Garbanzo Bean Salad":2.98,"New Beet Salad":1.4,"Greek Orzo Salad":2.59,"Romanesco Quinoa Salad":2.19,"Coleslaw":3.08,"Banh Mi Salad":2.52,"Pesto Pasta Salad":1.48,"Greek Farro Salad":2.93,"Thai Cabbage Salad":2.79,"Vegan Pesto Pasta Salad":0.81,"Spinach Pasta Salad":5.38,"Quinoa Detox Salad":2.54,"Kale Recharge Salad":2.7,"Shredded Chicken":13.63,"Tofu":3.34,"Brisket":3.82,"Chicken Noodle":8.22,"Lemon Chicken Orzo":1.33,"Matzo Ball Soup":1,"Chicken Tortilla":0.78,"Minestrone":0.78,"Chicken Enchilada Soup":0.89,"New England Clam Chowder":2.22,"Tomato Bisque (MWO)":0.22,"Spring Vegetable":0.11,"Maine Lobster Bisque":0.56,"Wild Mushroom Bisque":0.33,"Broccoli Cheese":0.22,"Route 66 Chili":1.22,"Russian Cabbage":0.89,"Tomato Basil Bisque":0.44,"Split Pea":0.11}},
+    fixed: /*FOH_FIXED*/{"Burritos": 12, "Turkey Sandwich": 10},
+    sellout: [],
+    nearzero: [],
+    flagged: [],
+    proxy: ["Spinach Pasta Salad","Quinoa Detox Salad","Kale Recharge Salad"]
+  },
+  Dinner: {
+    label: 'Dinner',
+    stations: /*DIN_STATIONS*/{"Entrees":["Rosemary Chicken","Herb Salmon","Chicken Artichoke Patties","Asian Meatballs","Salmon Cake","Chicken Pot Pie","Turkey Spinach Meatballs","Flat Iron","Shredded Brisket","Poached Salmon","Blackened Chicken","Blackened Salmon","Spring Lake Tri Tip","Veggie Pot Pie","First Light Tri Tip","Turkey Lasagna","Coconut Chicken Strips","Chicken W Pineapple Salsa","Salmon W Pineapple Salsa","Kale Mushroom Lasagna"],"Sides":["Sauteed Veggies","Roasted Brussels","Roasted Beets","Herb Roasted Potatos","Tumeric Roasted Veggies","Glazed Rainbow Carrots","Roasted Broccolini","Mashed Potato","Grilled Asparagus","Mac N Cheese","Garlic Parmesean Cauliflower","Balsamic Roasted Beets","Turmeric Cauliflower","Balsamic Baby Mushrooms"]},
+    icons: {"Entrees":"🍖","Sides":"🥗"},
+    par: /*DIN_PAR*/{"Monday":{"Asian Meatballs":13,"Balsamic Roasted Beets":2,"Blackened Chicken":5,"Blackened Salmon":4,"Chicken Artichoke Patties":13,"Chicken Pot Pie":7,"First Light Tri Tip":4,"Flat Iron":7,"Garlic Parmesean Cauliflower":5,"Glazed Rainbow Carrots":8,"Grilled Asparagus":6,"Herb Roasted Potatos":15,"Herb Salmon":25,"Mac N Cheese":5,"Mashed Potato":7,"Poached Salmon":6,"Roasted Beets":18,"Roasted Broccolini":6,"Roasted Brussels":23,"Rosemary Chicken":30,"Salmon Cake":9,"Sauteed Veggies":23,"Shredded Brisket":5,"Spring Lake Tri Tip":3,"Tumeric Roasted Veggies":12,"Turkey Lasagna":3,"Turkey Spinach Meatballs":8,"Veggie Pot Pie":4,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Tuesday":{"Asian Meatballs":9,"Balsamic Roasted Beets":2,"Blackened Chicken":5,"Blackened Salmon":4,"Chicken Artichoke Patties":12,"Chicken Pot Pie":12,"First Light Tri Tip":2,"Flat Iron":8,"Garlic Parmesean Cauliflower":4,"Glazed Rainbow Carrots":7,"Grilled Asparagus":8,"Herb Roasted Potatos":15,"Herb Salmon":23,"Mac N Cheese":5,"Mashed Potato":7,"Poached Salmon":4,"Roasted Beets":17,"Roasted Broccolini":5,"Roasted Brussels":20,"Rosemary Chicken":30,"Salmon Cake":7,"Sauteed Veggies":23,"Shredded Brisket":3,"Spring Lake Tri Tip":4,"Tumeric Roasted Veggies":11,"Turkey Lasagna":3,"Turkey Spinach Meatballs":6,"Veggie Pot Pie":4,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Wednesday":{"Asian Meatballs":8,"Balsamic Roasted Beets":1,"Blackened Chicken":6,"Blackened Salmon":4,"Chicken Artichoke Patties":12,"Chicken Pot Pie":14,"First Light Tri Tip":2,"Flat Iron":10,"Garlic Parmesean Cauliflower":3,"Glazed Rainbow Carrots":8,"Grilled Asparagus":8,"Herb Roasted Potatos":15,"Herb Salmon":23,"Mac N Cheese":4,"Mashed Potato":6,"Poached Salmon":5,"Roasted Beets":15,"Roasted Broccolini":6,"Roasted Brussels":20,"Rosemary Chicken":27,"Salmon Cake":6,"Sauteed Veggies":23,"Shredded Brisket":3,"Spring Lake Tri Tip":3,"Tumeric Roasted Veggies":10,"Turkey Lasagna":3,"Turkey Spinach Meatballs":7,"Veggie Pot Pie":5,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Thursday":{"Asian Meatballs":7,"Balsamic Roasted Beets":1,"Blackened Chicken":4,"Blackened Salmon":4,"Chicken Artichoke Patties":16,"Chicken Pot Pie":12,"First Light Tri Tip":2,"Flat Iron":8,"Garlic Parmesean Cauliflower":4,"Glazed Rainbow Carrots":7,"Grilled Asparagus":6,"Herb Roasted Potatos":16,"Herb Salmon":25,"Mac N Cheese":3,"Mashed Potato":5,"Poached Salmon":6,"Roasted Beets":15,"Roasted Broccolini":7,"Roasted Brussels":20,"Rosemary Chicken":26,"Salmon Cake":10,"Sauteed Veggies":21,"Shredded Brisket":4,"Spring Lake Tri Tip":5,"Tumeric Roasted Veggies":10,"Turkey Lasagna":3,"Turkey Spinach Meatballs":9,"Veggie Pot Pie":4,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Friday":{"Asian Meatballs":11,"Balsamic Roasted Beets":1,"Blackened Chicken":5,"Blackened Salmon":5,"Chicken Artichoke Patties":19,"Chicken Pot Pie":8,"First Light Tri Tip":2,"Flat Iron":7,"Garlic Parmesean Cauliflower":3,"Glazed Rainbow Carrots":8,"Grilled Asparagus":6,"Herb Roasted Potatos":17,"Herb Salmon":25,"Mac N Cheese":3,"Mashed Potato":5,"Poached Salmon":7,"Roasted Beets":16,"Roasted Broccolini":7,"Roasted Brussels":21,"Rosemary Chicken":26,"Salmon Cake":13,"Sauteed Veggies":20,"Shredded Brisket":8,"Spring Lake Tri Tip":5,"Tumeric Roasted Veggies":8,"Turkey Lasagna":3,"Turkey Spinach Meatballs":11,"Veggie Pot Pie":3,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Saturday":{"Asian Meatballs":14,"Balsamic Roasted Beets":1,"Blackened Chicken":5,"Blackened Salmon":5,"Chicken Artichoke Patties":20,"Chicken Pot Pie":5,"First Light Tri Tip":3,"Flat Iron":6,"Garlic Parmesean Cauliflower":5,"Glazed Rainbow Carrots":9,"Grilled Asparagus":5,"Herb Roasted Potatos":17,"Herb Salmon":26,"Mac N Cheese":3,"Mashed Potato":6,"Poached Salmon":8,"Roasted Beets":18,"Roasted Broccolini":7,"Roasted Brussels":23,"Rosemary Chicken":27,"Salmon Cake":16,"Sauteed Veggies":21,"Shredded Brisket":10,"Spring Lake Tri Tip":4,"Tumeric Roasted Veggies":10,"Turkey Lasagna":3,"Turkey Spinach Meatballs":11,"Veggie Pot Pie":3,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9},"Sunday":{"Asian Meatballs":14,"Balsamic Roasted Beets":2,"Blackened Chicken":5,"Blackened Salmon":5,"Chicken Artichoke Patties":16,"Chicken Pot Pie":4,"First Light Tri Tip":4,"Flat Iron":6,"Garlic Parmesean Cauliflower":5,"Glazed Rainbow Carrots":9,"Grilled Asparagus":5,"Herb Roasted Potatos":16,"Herb Salmon":26,"Mac N Cheese":4,"Mashed Potato":7,"Poached Salmon":7,"Roasted Beets":19,"Roasted Broccolini":6,"Roasted Brussels":23,"Rosemary Chicken":30,"Salmon Cake":12,"Sauteed Veggies":21,"Shredded Brisket":9,"Spring Lake Tri Tip":4,"Tumeric Roasted Veggies":11,"Turkey Lasagna":3,"Turkey Spinach Meatballs":9,"Veggie Pot Pie":3,"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9}},
+    avg: /*DIN_AVG*/{"Monday":{"Asian Meatballs":4.97,"Balsamic Roasted Beets":0.36,"Blackened Chicken":1.38,"Blackened Salmon":1.28,"Chicken Artichoke Patties":3.65,"Chicken Pot Pie":0.33,"First Light Tri Tip":1.32,"Flat Iron":2.1,"Garlic Parmesean Cauliflower":1.65,"Glazed Rainbow Carrots":3.04,"Grilled Asparagus":0.37,"Herb Roasted Potatos":2.51,"Herb Salmon":7.04,"Mac N Cheese":0.85,"Mashed Potato":1.79,"Poached Salmon":2.63,"Roasted Beets":4.81,"Roasted Broccolini":1.95,"Roasted Brussels":6.49,"Rosemary Chicken":5.74,"Salmon Cake":3.7,"Sauteed Veggies":4.81,"Shredded Brisket":2.74,"Spring Lake Tri Tip":0.19,"Tumeric Roasted Veggies":4.29,"Turkey Lasagna":0.69,"Turkey Spinach Meatballs":2.55,"Veggie Pot Pie":1.11},"Tuesday":{"Asian Meatballs":3.4,"Balsamic Roasted Beets":0.58,"Blackened Chicken":1.05,"Blackened Salmon":1.22,"Chicken Artichoke Patties":2.42,"Chicken Pot Pie":1.67,"First Light Tri Tip":0.85,"Flat Iron":1.83,"Garlic Parmesean Cauliflower":1.37,"Glazed Rainbow Carrots":1.59,"Grilled Asparagus":1.79,"Herb Roasted Potatos":2.95,"Herb Salmon":5.61,"Mac N Cheese":1.64,"Mashed Potato":1.73,"Poached Salmon":1.19,"Roasted Beets":4.34,"Roasted Broccolini":1.49,"Roasted Brussels":3.61,"Rosemary Chicken":8.46,"Salmon Cake":1.8,"Sauteed Veggies":3.32,"Shredded Brisket":1.12,"Spring Lake Tri Tip":1.62,"Tumeric Roasted Veggies":3.48,"Turkey Lasagna":0.62,"Turkey Spinach Meatballs":2.01,"Veggie Pot Pie":0.22},"Wednesday":{"Asian Meatballs":3.06,"Balsamic Roasted Beets":0.12,"Blackened Chicken":1.67,"Blackened Salmon":0.77,"Chicken Artichoke Patties":2.17,"Chicken Pot Pie":4,"First Light Tri Tip":0.79,"Flat Iron":2.43,"Garlic Parmesean Cauliflower":1.07,"Glazed Rainbow Carrots":2.4,"Grilled Asparagus":3.08,"Herb Roasted Potatos":2.75,"Herb Salmon":2.62,"Mac N Cheese":1.86,"Mashed Potato":2.2,"Poached Salmon":0.79,"Roasted Beets":2.48,"Roasted Broccolini":1.26,"Roasted Brussels":3.99,"Rosemary Chicken":4.96,"Salmon Cake":2.6,"Sauteed Veggies":6.54,"Shredded Brisket":0.6,"Spring Lake Tri Tip":0.85,"Tumeric Roasted Veggies":2.71,"Turkey Lasagna":0.73,"Turkey Spinach Meatballs":1.83,"Veggie Pot Pie":1.89},"Thursday":{"Asian Meatballs":1.1,"Balsamic Roasted Beets":0.24,"Blackened Chicken":1.19,"Blackened Salmon":0.94,"Chicken Artichoke Patties":2.07,"Chicken Pot Pie":4.67,"First Light Tri Tip":0.08,"Flat Iron":2.85,"Garlic Parmesean Cauliflower":0.78,"Glazed Rainbow Carrots":2.08,"Grilled Asparagus":1.51,"Herb Roasted Potatos":3.05,"Herb Salmon":4.34,"Mac N Cheese":0.88,"Mashed Potato":2.03,"Poached Salmon":1.13,"Roasted Beets":3.05,"Roasted Broccolini":1.54,"Roasted Brussels":3.18,"Rosemary Chicken":5.5,"Salmon Cake":1.33,"Sauteed Veggies":4.36,"Shredded Brisket":0.47,"Spring Lake Tri Tip":0.93,"Tumeric Roasted Veggies":3.45,"Turkey Lasagna":0.24,"Turkey Spinach Meatballs":1.01,"Veggie Pot Pie":1},"Friday":{"Asian Meatballs":2.23,"Balsamic Roasted Beets":0,"Blackened Chicken":1.77,"Blackened Salmon":1.23,"Chicken Artichoke Patties":2.48,"Chicken Pot Pie":3.67,"First Light Tri Tip":0.46,"Flat Iron":2.93,"Garlic Parmesean Cauliflower":0.72,"Glazed Rainbow Carrots":1.96,"Grilled Asparagus":1.8,"Herb Roasted Potatos":2.4,"Herb Salmon":6.65,"Mac N Cheese":0.84,"Mashed Potato":0.87,"Poached Salmon":1.95,"Roasted Beets":2.31,"Roasted Broccolini":1.76,"Roasted Brussels":3.21,"Rosemary Chicken":4.72,"Salmon Cake":0.97,"Sauteed Veggies":3.23,"Shredded Brisket":1.19,"Spring Lake Tri Tip":0.83,"Tumeric Roasted Veggies":2.26,"Turkey Lasagna":0.16,"Turkey Spinach Meatballs":2.92,"Veggie Pot Pie":1.11},"Saturday":{"Asian Meatballs":2.96,"Balsamic Roasted Beets":0,"Blackened Chicken":0.51,"Blackened Salmon":1.46,"Chicken Artichoke Patties":6.69,"Chicken Pot Pie":2.22,"First Light Tri Tip":0.52,"Flat Iron":1.34,"Garlic Parmesean Cauliflower":1.24,"Glazed Rainbow Carrots":2.2,"Grilled Asparagus":1.5,"Herb Roasted Potatos":4.39,"Herb Salmon":5.3,"Mac N Cheese":0.84,"Mashed Potato":0.87,"Poached Salmon":2,"Roasted Beets":2.66,"Roasted Broccolini":2.61,"Roasted Brussels":4.23,"Rosemary Chicken":3.54,"Salmon Cake":5.93,"Sauteed Veggies":3.36,"Shredded Brisket":1.65,"Spring Lake Tri Tip":1.95,"Tumeric Roasted Veggies":2.53,"Turkey Lasagna":0.09,"Turkey Spinach Meatballs":3.52,"Veggie Pot Pie":0.78},"Sunday":{"Asian Meatballs":4.09,"Balsamic Roasted Beets":0.09,"Blackened Chicken":1.77,"Blackened Salmon":1.54,"Chicken Artichoke Patties":4.83,"Chicken Pot Pie":1.11,"First Light Tri Tip":0.63,"Flat Iron":1.3,"Garlic Parmesean Cauliflower":0.77,"Glazed Rainbow Carrots":2.85,"Grilled Asparagus":1.87,"Herb Roasted Potatos":4.2,"Herb Salmon":4.06,"Mac N Cheese":0.76,"Mashed Potato":2.45,"Poached Salmon":2.1,"Roasted Beets":3.85,"Roasted Broccolini":1.47,"Roasted Brussels":4.08,"Rosemary Chicken":4.97,"Salmon Cake":4.74,"Sauteed Veggies":4.06,"Shredded Brisket":4.08,"Spring Lake Tri Tip":1.3,"Tumeric Roasted Veggies":2.13,"Turkey Lasagna":0.17,"Turkey Spinach Meatballs":3.26,"Veggie Pot Pie":0.56}},
+    fixed: /*DIN_FIXED*/{"Coconut Chicken Strips":18,"Chicken W Pineapple Salsa":7,"Salmon W Pineapple Salsa":7,"Kale Mushroom Lasagna":3,"Turmeric Cauliflower":9,"Balsamic Baby Mushrooms":9,"Turkey Lasagna":3},
+    sellout: /*DIN_SELLOUT*/["Rosemary Chicken","Herb Salmon","Sauteed Veggies","Roasted Brussels","Roasted Beets","Herb Roasted Potatos","Chicken Artichoke Patties"],
+    nearzero: /*DIN_NEARZERO*/["Balsamic Roasted Beets"],
+    flagged: [],
+    proxy: []
+  }
+};
+for (const k in DATA) {
+  const d = DATA[k];
+  d.fixedSet    = new Set(Object.keys(d.fixed));
+  d.selloutSet  = new Set(d.sellout);
+  d.nearzeroSet = new Set(d.nearzero);
+  d.flaggedSet  = new Set(d.flagged);
+  d.proxySet    = new Set(d.proxy);
+}
+
+// ── Log chips: NP (not prepped) + sellout-time buckets ─────────────────────
+// Time buckets map to a demand-capture fraction for the refresh math:
+// "Sold out at 4pm" ≈ captured 60% of the day → true demand ≈ par / 0.60.
+// NP = never made that day → counts as a wall hole, but NO demand signal.
+const TIME_OPTS = [
+  {v:"np",     label:"NP",     small:"not prepped", cap:null},
+  {v:"early",  label:"By ~2p", cap:0.40},
+  {v:"mid",    label:"By ~4p", cap:0.60},
+  {v:"late",   label:"By ~6p", cap:0.82},
+  {v:"lasted", label:"Lasted", cap:1.00}
+];
+const CAP = {early:0.40, mid:0.60, late:0.82, lasted:1.00};
+const TIME_LABEL = Object.fromEntries(TIME_OPTS.map(o=>[o.v,o.label]));
+
+// ── Storage keys ────────────────────────────────────────────────────────────
+const UI_KEY = 'pp8_ui';
+function prepKey(set, day)  { return 'pp8_prep_' + set + '_' + day; }
+function logKey(set, date)  { return 'pp8_log_' + set + '_' + date; }
+
+// ── State ───────────────────────────────────────────────────────────────────
+let curSet     = 'FOH';
+let mode       = 'pars';        // 'pars' | 'prep' | 'log'
+let currentDay = null;
+let todayDay   = null;
+let logDate    = null;          // YYYY-MM-DD
+let counts     = {};            // prep counts for curSet+currentDay  {item:{h}} or {item:{w,b}}
+let logData    = {};            // log entries for curSet+logDate     {item:{time,spoil}}
+const collapsedStations = new Set();
+let _prepInputOrder = [];
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function safeId(item) { return item.replace(/[^a-zA-Z0-9]/g,'_'); }
+function cssEscape(s) { return s.replace(/"/g, '\\"'); }
+function detectToday() { return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()]; }
+function fmtDateISO(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), da = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + da;
+}
+function parseISO(s) { const p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+function fmtDateShort(iso) {
+  const d = parseISO(iso);
+  const dn = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+  const mn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()];
+  return dn + ' ' + mn + ' ' + d.getDate();
+}
+function dowOfISO(iso) { return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][parseISO(iso).getDay()]; }
+
+function getPar(set, item, day) {
+  const d = DATA[set];
+  if (d.fixedSet.has(item)) return d.fixed[item];
+  return Math.ceil(d.par[day][item] ?? 0);
+}
+function getAvg(set, item, day) {
+  const v = DATA[set].avg[day] ? DATA[set].avg[day][item] : undefined;
+  return (typeof v === 'number') ? v : undefined;
+}
+function getTier(set, item, day) {
+  const d = DATA[set];
+  if (d.fixedSet.has(item))    return "F";
+  if (d.selloutSet.has(item))  return "SELL";
+  if (d.nearzeroSet.has(item)) return "ZERO";
+  if (d.flaggedSet.has(item))  return "FLAG";
+  const par = getPar(set, item, day);
+  if (par >= 10) return "H";
+  if (par >= 4)  return "M";
+  return "L";
+}
+
+// Sort within a station: SELL first (par desc), then everything else —
+// including FIXED — interleaved by par desc; ZERO sinks to the bottom.
+function sortItems(set, station, day) {
+  const d = DATA[set];
+  const grp = it => d.selloutSet.has(it) ? 0 : d.nearzeroSet.has(it) ? 2 : 1;
+  return [...d.stations[station]].sort((a,b) => {
+    const ga = grp(a), gb = grp(b);
+    if (ga !== gb) return ga - gb;
+    return getPar(set,b,day) - getPar(set,a,day);
+  });
+}
+
+function stationFlagCount(set, station) {
+  const d = DATA[set];
+  let n = 0;
+  for (const item of d.stations[station]) {
+    if (d.flaggedSet.has(item) || d.nearzeroSet.has(item)) n++;
+  }
+  return n;
+}
+
+// ── Prep counts: storage ────────────────────────────────────────────────────
+// FOH:    {item:{h:n}}     (single Have count)
+// Dinner: {item:{w:n,b:n}} (Wall + Walk-in)
+function totalHave(item) {
+  const r = counts[item];
+  if (!r) return undefined;
+  if (curSet === 'FOH') return (r.h !== undefined) ? r.h : undefined;
+  if (r.w === undefined && r.b === undefined) return undefined;
+  return (r.w || 0) + (r.b || 0);
+}
+function saveCounts() {
+  try { sessionStorage.setItem(prepKey(curSet, currentDay), JSON.stringify(counts)); } catch(e) {}
+}
+function loadCounts() {
+  counts = {};
+  try {
+    const raw = sessionStorage.getItem(prepKey(curSet, currentDay));
+    if (raw) counts = JSON.parse(raw) || {};
+  } catch(e) {}
+}
+function clearCounts() {
+  counts = {};
+  try { sessionStorage.removeItem(prepKey(curSet, currentDay)); } catch(e) {}
+}
+
+// ── Log entries: storage ────────────────────────────────────────────────────
+function loadLog() {
+  logData = {};
+  try {
+    const raw = localStorage.getItem(logKey(curSet, logDate));
+    if (raw) logData = JSON.parse(raw) || {};
+  } catch(e) {}
+}
+function saveLog() {
+  try { localStorage.setItem(logKey(curSet, logDate), JSON.stringify(logData)); } catch(e) {}
+}
+function readLogFor(set, date) {
+  if (set === curSet && date === logDate) return logData;
+  try {
+    const raw = localStorage.getItem(logKey(set, date));
+    if (raw) return JSON.parse(raw) || {};
+  } catch(e) {}
+  return {};
+}
+
+// ── One-time migration: standalone Dinner Sellout Log → pp8 keys ───────────
+// Robbie has real logged data under dinner_sellout_v1_* — copy, never destroy.
+function migrateLegacyLogs() {
+  try {
+    if (localStorage.getItem('pp8_migrated')) return;
+    const re = /^dinner_sellout_v1_(\d{4}-\d{2}-\d{2})$/;
+    const found = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      const m = k && k.match(re);
+      if (m) found.push(m[1]);
+    }
+    for (const date of found) {
+      const target = logKey('Dinner', date);
+      if (localStorage.getItem(target) === null) {
+        localStorage.setItem(target, localStorage.getItem('dinner_sellout_v1_' + date));
+      }
+    }
+    localStorage.setItem('pp8_migrated', '1');
+  } catch(e) {}
+}
+
+// ── UI state persistence ────────────────────────────────────────────────────
+function saveUI() {
+  try { localStorage.setItem(UI_KEY, JSON.stringify({set: curSet, mode: mode})); } catch(e) {}
+}
+function loadUI() {
+  try {
+    const raw = localStorage.getItem(UI_KEY);
+    if (raw) {
+      const u = JSON.parse(raw);
+      if (u.set && DATA[u.set]) curSet = u.set;
+      if (u.mode && ['pars','prep','log'].includes(u.mode)) mode = u.mode;
+    }
+  } catch(e) {}
+}
+
+// ═══ RENDER ═════════════════════════════════════════════════════════════════
+function render() {
+  document.body.classList.toggle('prep-mode', mode === 'prep');
+  document.body.classList.toggle('log-mode',  mode === 'log');
+
+  document.getElementById('freshText').textContent = FRESH[curSet];
+  document.querySelectorAll('#setSeg button').forEach(b => b.classList.toggle('active', b.dataset.set === curSet));
+  document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+  renderDayNav();
+  const cov = document.getElementById('coverageLabel');
+  if (cov) cov.textContent = 'Covers ' + DOW_COV[currentDay];
+
+  const root = document.getElementById('mainContent');
+  root.innerHTML = '';
+  if (mode === 'pars')      renderPars(root);
+  else if (mode === 'prep') renderPrep(root);
+  else                      renderLog(root);
+
+  updateLiveChip();
+  if (mode === 'log') updateSummary();
+}
+
+function renderDayNav() {
+  const nav = document.getElementById('dayNav');
+  nav.innerHTML = '';
+  DOW.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'day-pill';
+    if (d === currentDay) btn.classList.add('active');
+    if (d === todayDay)   btn.classList.add('today');
+    btn.textContent = DOW_SHORT[i];
+    btn.onclick = () => selectDay(d);
+    nav.appendChild(btn);
+  });
+  const dp = document.getElementById('datePick');
+  if (dp && logDate) dp.value = logDate;
+}
+
+function sectionShell(set, station, day) {
+  const d = DATA[set];
+  const section = document.createElement('div');
+  section.className = 'section' + (collapsedStations.has(set + '|' + station) ? ' collapsed' : '');
+  section.dataset.station = station;
+  const icon = d.icons[station] || '📦';
+  const flagCount = stationFlagCount(set, station);
+  const flagStr = flagCount > 0 ? ` · ${flagCount} flag${flagCount > 1 ? 's' : ''}` : '';
+  section.innerHTML = `
+    <div class="section-header">
+      <div class="section-label-wrap">
+        <span class="section-label"><span class="section-icon">${icon}</span>${esc(station)}</span>
+        <span class="section-count">${d.stations[station].length} items${flagStr}</span>
+      </div>
+      <span class="section-chevron">&#x25BE;</span>
+    </div>
+    <div class="section-body"><div class="card"></div></div>
+  `;
+  section.querySelector('.section-header').addEventListener('click', () => {
+    const key = set + '|' + station;
+    if (collapsedStations.has(key)) { collapsedStations.delete(key); section.classList.remove('collapsed'); }
+    else { collapsedStations.add(key); section.classList.add('collapsed'); }
+  });
+  return section;
+}
+
+function namePrefix(set, item) {
+  const d = DATA[set];
+  if (d.flaggedSet.has(item))  return '<span class="flag-icon">⚠</span>';
+  if (d.nearzeroSet.has(item)) return '<span class="near-zero-icon">○</span>';
+  return '';
+}
+
+// ── Pars (browse) mode ──────────────────────────────────────────────────────
+function renderPars(root) {
+  const set = curSet, d = DATA[set], day = currentDay;
+  for (const station of Object.keys(d.stations)) {
+    const section = sectionShell(set, station, day);
+    const card = section.querySelector('.card');
+    for (const item of sortItems(set, station, day)) {
+      const par = getPar(set, item, day);
+      const avg = getAvg(set, item, day);
+      const tier = getTier(set, item, day);
+      const tierLabel = tier === 'F' ? 'FIXED' : tier === 'SELL' ? 'SELLING OUT' : tier === 'FLAG' ? '⚠ FLAG' : tier === 'ZERO' ? 'VERIFY' : tier;
+      const avgDisplay = (typeof avg === 'number' && avg > 0) ? avg.toFixed(1) + '/d' : '—';
+      const sub = d.proxySet.has(item) ? '16oz proxy' : '';
+      const row = document.createElement('div');
+      row.className = 'item-row tier-' + tier;
+      row.innerHTML = `
+        <div class="item-info">
+          <div class="item-name">${namePrefix(set,item)}${esc(item)}</div>
+          <div class="item-sub" style="${sub ? '' : 'display:none;'}">${sub}</div>
+        </div>
+        <div class="item-avg">${avgDisplay}</div>
+        <div class="par-badge-wrap">
+          <div class="par-badge">${par}</div>
+          <span class="tier-label">${tierLabel}</span>
+        </div>
+      `;
+      card.appendChild(row);
+    }
+    root.appendChild(section);
+  }
+  appendLegendAndNotes(root, set);
+}
+
+function appendLegendAndNotes(root, set) {
+  const legendToggle = document.createElement('div');
+  legendToggle.className = 'legend-toggle';
+  legendToggle.textContent = 'ⓘ Show tier legend';
+  legendToggle.onclick = () => {
+    const l = document.getElementById('legendBlock');
+    l.classList.toggle('open');
+    legendToggle.textContent = l.classList.contains('open') ? '✕ Hide legend' : 'ⓘ Show tier legend';
+  };
+  root.appendChild(legendToggle);
+
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.id = 'legendBlock';
+  legend.innerHTML = `
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(4,106,56,0.30)"></div>High (10+)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(198,170,118,0.45)"></div>Medium (4–9)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(154,148,133,0.30)"></div>Low (&lt;4)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(184,108,30,0.35)"></div>Selling out (lifted)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(122,106,158,0.30)"></div>Fixed (manual)</div>
+  `;
+  root.appendChild(legend);
+
+  const notes = document.createElement('div');
+  notes.className = 'notes-card';
+  notes.innerHTML = (set === 'FOH') ? `
+    <strong>Prep Par</strong> = 3-day rolling avg &times; 1.10 buffer<br>
+    <strong>Source</strong> = 9-week rolling BI data, all 7 days real (Sat included)<br>
+    <strong>Each par</strong> covers the selected day + next 2 days<br>
+    <strong>Quiche</strong> = slices (Lorraine + Florentine tracked separately)<br>
+    <strong>Hard Boiled Eggs</strong> = 3-packs<br>
+    <strong>Fixed pars (purple, manual):</strong> Burritos 12 &middot; Turkey Sandwich 10<br>
+    <strong>24oz Salads</strong> = 16oz UPC used as proxy<br>
+    <strong>Alt Sandwich</strong> = flex slot — highest-moving untracked sandwich<br>
+    <strong>Tuna Salad</strong> includes cranberry tuna (merged)<br>
+    <strong>Tamales</strong> = store UPCs only<br>
+    <strong>Shredded Chicken</strong> = 32oz only (16oz discontinued)
+  ` : `
+    <strong>Prep Par</strong> = 3-day rolling avg &times; 1.10 buffer<br>
+    <strong>Source</strong> = 9-week rolling BI data, all 7 days real (no proxy)<br>
+    <strong>Each par</strong> covers the selected day + next 2 days<br>
+    <strong>Prep mode</strong> — count <span style="color:#1A7A35;font-weight:600">Wall</span> (on the floor) + <span style="color:#0058B8;font-weight:600">Walk-in</span> (staged in back). <strong>Make</strong> = Par &minus; (Wall + Walk-in)<br>
+    <strong>Fixed pars (purple, manual):</strong> Coconut Chicken Strips 18, Chicken w/ Pineapple Salsa 7, Salmon w/ Pineapple Salsa 7, Kale Mushroom Lasagna 3, Turkey Lasagna 3, Turmeric Cauliflower 9, Balsamic Baby Mushrooms 9 — held flat (lasagnas pinned at 3 to look full; rest pending rolling-average history)<br>
+    <strong>▲ Selling out (amber):</strong> Rosemary Chicken, Herb Salmon, Sauteed Veggies, Roasted Brussels, Roasted Beets, Herb Roasted Potatos, Chicken Artichoke Patties — pars lifted toward true demand because they sell out before close (recorded sales were supply-capped). Watch spoilage: zero spoils + still selling out → lift again; spoils appear → back off one notch<br>
+    <strong>Balsamic Roasted Beets</strong> = near-zero, verify on wall<br>
+    <strong>Still excluded:</strong> Crackling Cauliflower, Potato Croquettes, Roasted Beet Medely — zero velocity; add when they return to rotation
+  `;
+  root.appendChild(notes);
+}
+
+// ── Prep mode ───────────────────────────────────────────────────────────────
+function renderPrep(root) {
+  const set = curSet, d = DATA[set], day = currentDay;
+  const isFOH = set === 'FOH';
+  const gridCls = isFOH ? 'prep-foh' : 'prep-din';
+  _prepInputOrder = [];
+
+  for (const station of Object.keys(d.stations)) {
+    const section = sectionShell(set, station, day);
+    const card = section.querySelector('.card');
+
+    const header = document.createElement('div');
+    header.className = 'prep-col-header ' + gridCls;
+    header.innerHTML = isFOH ? `
+      <span class="prep-col">Item</span>
+      <span class="prep-col">Par</span>
+      <span class="prep-col">Have</span>
+      <span class="prep-col">Need</span>
+    ` : `
+      <span class="prep-col">Item</span>
+      <span class="prep-col">Par</span>
+      <span class="prep-col wall">Wall</span>
+      <span class="prep-col walkin">Walk-in</span>
+      <span class="prep-col">Make</span>
+    `;
+    card.appendChild(header);
+
+    for (const item of sortItems(set, station, day)) {
+      const sid = safeId(item);
+      const par = getPar(set, item, day);
+      const rec = counts[item] || {};
+      const sub = d.proxySet.has(item) ? '16oz proxy' : '';
+
+      const row = document.createElement('div');
+      row.className = 'item-row-prep ' + gridCls;
+      row.dataset.item = item;
+
+      if (isFOH) {
+        const hv = rec.h;
+        row.innerHTML = `
+          <div>
+            <div class="item-name">${namePrefix(set,item)}${esc(item)}</div>
+            <div class="item-sub" style="${sub ? '' : 'display:none;'}">${sub}</div>
+          </div>
+          <div class="prep-par">${par}</div>
+          <input id="have-${sid}" type="number" inputmode="numeric" pattern="[0-9]*"
+            enterkeyhint="next" autocomplete="off" autocorrect="off"
+            class="prep-input have${hv !== undefined ? ' touched' : ''}"
+            value="${hv !== undefined ? hv : ''}" placeholder="—">
+          <div class="prep-need empty" id="need-${sid}">—</div>
+        `;
+        const input = row.querySelector('.prep-input');
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('input', e => onCountInput(item, 'h', e.target.value));
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); advanceToNext('have-' + sid); } });
+        _prepInputOrder.push('have-' + sid);
+      } else {
+        const wv = rec.w, bv = rec.b;
+        row.innerHTML = `
+          <div>
+            <div class="item-name">${namePrefix(set,item)}${esc(item)}</div>
+            <div class="item-sub" style="${sub ? '' : 'display:none;'}">${sub}</div>
+          </div>
+          <div class="prep-par">${par}</div>
+          <input id="wall-${sid}" type="number" inputmode="numeric" pattern="[0-9]*"
+            enterkeyhint="next" autocomplete="off" autocorrect="off"
+            class="prep-input wall${wv !== undefined ? ' touched' : ''}"
+            value="${wv !== undefined ? wv : ''}" placeholder="—">
+          <input id="walk-${sid}" type="number" inputmode="numeric" pattern="[0-9]*"
+            enterkeyhint="next" autocomplete="off" autocorrect="off"
+            class="prep-input walkin${bv !== undefined ? ' touched' : ''}"
+            value="${bv !== undefined ? bv : ''}" placeholder="—">
+          <div class="prep-need empty" id="need-${sid}">—</div>
+        `;
+        const wallInput = row.querySelector('.prep-input.wall');
+        const walkInput = row.querySelector('.prep-input.walkin');
+        wallInput.addEventListener('focus', () => wallInput.select());
+        walkInput.addEventListener('focus', () => walkInput.select());
+        wallInput.addEventListener('input', e => onCountInput(item, 'w', e.target.value));
+        walkInput.addEventListener('input', e => onCountInput(item, 'b', e.target.value));
+        wallInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); advanceToNext('wall-' + sid); } });
+        walkInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); advanceToNext('walk-' + sid); } });
+        _prepInputOrder.push('wall-' + sid);
+        _prepInputOrder.push('walk-' + sid);
+      }
+      card.appendChild(row);
+      if (totalHave(item) !== undefined) updateNeedCell(item);
+    }
+    root.appendChild(section);
+  }
+}
+
+function onCountInput(item, field, val) {
+  const n = parseInt(val);
+  const rec = counts[item] || {};
+  if (val === '' || isNaN(n)) delete rec[field];
+  else rec[field] = n;
+  if (Object.keys(rec).length) counts[item] = rec;
+  else delete counts[item];
+
+  saveCounts();
+  updateNeedCell(item);
+
+  const idPrefix = field === 'h' ? 'have-' : field === 'w' ? 'wall-' : 'walk-';
+  const input = document.getElementById(idPrefix + safeId(item));
+  if (input) input.classList.toggle('touched', rec[field] !== undefined);
+
+  updateLiveChip();
+}
+
+function updateNeedCell(item) {
+  const par = getPar(curSet, item, currentDay);
+  const el = document.getElementById('need-' + safeId(item));
+  if (!el) return;
+  const have = totalHave(item);
+  if (have === undefined) {
+    el.className = 'prep-need empty'; el.textContent = '—';
+  } else {
+    const make = par - have;
+    if (make > 0)      { el.className = 'prep-need positive'; el.textContent = String(make); }
+    else if (make < 0) { el.className = 'prep-need negative'; el.textContent = String(make); }
+    else               { el.className = 'prep-need zero';     el.textContent = '✓'; }
+  }
+}
+
+function advanceToNext(currentInputId) {
+  const idx = _prepInputOrder.indexOf(currentInputId);
+  if (idx === -1) return;
+  const nextId = _prepInputOrder[idx + 1];
+  if (!nextId) { document.getElementById(currentInputId)?.blur(); return; }
+  const nextEl = document.getElementById(nextId);
+  if (nextEl) { nextEl.focus(); nextEl.select(); }
+}
+
+// ── Log mode ────────────────────────────────────────────────────────────────
+function renderLog(root) {
+  const set = curSet, d = DATA[set];
+
+  const hint = document.createElement('div');
+  hint.className = 'hint';
+  hint.style.margin = '4px 0 14px';
+  hint.innerHTML = set === 'Dinner'
+    ? 'Tap when each item <b>ran out</b> — or "Lasted" if it made it to close. <b>NP</b> = never prepped today (a hole, but no demand signal). Add <b>spoils</b> (units tossed) on the right. <b>▲ items</b> are the lifted sellout suspects — watch those most.'
+    : 'Tap when each item <b>ran out</b> (wall hole) — or "Lasted" if it held all day. <b>NP</b> = never prepped today (a hole, but no demand signal). Spoils here is optional — the weekly spoils PDF stays the FOH source of record.';
+  root.appendChild(hint);
+
+  for (const station of Object.keys(d.stations)) {
+    const section = sectionShell(set, station, currentDayForLog());
+    const card = section.querySelector('.card');
+    // priority (▲ sellout suspects) first within each section; station order otherwise
+    const items = [...d.stations[station]].sort((a,b) => (d.selloutSet.has(b)?1:0) - (d.selloutSet.has(a)?1:0));
+    for (const item of items) {
+      card.appendChild(buildLogRow(set, item));
+    }
+    root.appendChild(section);
+  }
+}
+function currentDayForLog() { return dowOfISO(logDate); }
+
+function buildLogRow(set, item) {
+  const d = DATA[set];
+  const sid = safeId(item);
+  const rec = logData[item] || {};
+  const pri = d.selloutSet.has(item);
+  const row = document.createElement('div');
+  row.id = 'logrow-' + sid;
+  row.className = 'log-row' + (pri ? ' priority' : '') + (rec.time === 'np' ? ' np-set' : '');
+
+  const head = document.createElement('div');
+  head.className = 'row-head';
+  head.innerHTML = `
+    <div class="item-name">${esc(item)}${pri ? '<span class="pri">▲</span>' : ''}</div>
+    <div class="spoil-wrap">
+      <span class="spoil-label">spoils</span>
+      <input class="spoil-input${rec.spoil ? ' has' : ''}" id="sp-${sid}" type="number" inputmode="numeric"
+        pattern="[0-9]*" placeholder="0" value="${rec.spoil !== undefined ? rec.spoil : ''}">
+    </div>
+  `;
+  head.querySelector('.spoil-input').addEventListener('focus', function(){ this.select(); });
+  head.querySelector('.spoil-input').addEventListener('input', function(){ setSpoil(item, this.value); });
+  row.appendChild(head);
+
+  const chips = document.createElement('div');
+  chips.className = 'time-chips';
+  for (const o of TIME_OPTS) {
+    const b = document.createElement('button');
+    b.className = 'chip' + (rec.time === o.v ? ' sel' : '');
+    b.dataset.v = o.v;
+    b.innerHTML = o.label + (o.small ? `<small>${o.small}</small>` : '');
+    b.addEventListener('click', () => setTime(item, o.v));
+    chips.appendChild(b);
+  }
+  row.appendChild(chips);
+  return row;
+}
+
+function setTime(item, v) {
+  logData[item] = logData[item] || {};
+  if (logData[item].time === v) delete logData[item].time;   // tap again to clear
+  else logData[item].time = v;
+  if (logData[item].time === undefined && logData[item].spoil === undefined) delete logData[item];
+  saveLog();
+  // surgical repaint of this row's chips + np tint
+  const row = document.getElementById('logrow-' + safeId(item));
+  if (row) {
+    const t = logData[item] ? logData[item].time : undefined;
+    row.classList.toggle('np-set', t === 'np');
+    row.querySelectorAll('.chip').forEach(c => c.classList.toggle('sel', c.dataset.v === t));
+  }
+  updateSummary();
+}
+
+function setSpoil(item, val) {
+  logData[item] = logData[item] || {};
+  const n = parseInt(val);
+  if (val === '' || isNaN(n)) delete logData[item].spoil;
+  else logData[item].spoil = n;
+  if (logData[item].time === undefined && logData[item].spoil === undefined) delete logData[item];
+  saveLog();
+  const el = document.getElementById('sp-' + safeId(item));
+  if (el) el.classList.toggle('has', !!(logData[item] && logData[item].spoil !== undefined && logData[item].spoil !== 0));
+  updateSummary();
+}
+
+// A "hole" = the wall was missing the item: sold out (early/mid/late) or never prepped (np).
+function isHole(rec) { return rec && rec.time && rec.time !== 'lasted'; }
+
+function logStats(set, date) {
+  const data = readLogFor(set, date);
+  let holes = 0, sellouts = 0, np = 0, spoiled = 0, priLogged = 0;
+  const d = DATA[set];
+  for (const item in data) {
+    const r = data[item];
+    if (isHole(r)) holes++;
+    if (r.time && r.time !== 'lasted' && r.time !== 'np') sellouts++;
+    if (r.time === 'np') np++;
+    if (r.spoil) spoiled += r.spoil;
+    if (r.time && d.selloutSet.has(item)) priLogged++;
+  }
+  return {holes, sellouts, np, spoiled, priLogged};
+}
+
+function updateSummary() {
+  const f = logStats('FOH', logDate);
+  const dn = logStats('Dinner', logDate);
+  const el = document.getElementById('summary');
+  if (!el) return;
+  const nPri = DATA.Dinner.selloutSet.size;
+  el.innerHTML = `FOH <b>${f.holes}</b> hole${f.holes===1?'':'s'} &middot; Dinner <b>${dn.holes}</b> &middot; <b>${f.spoiled + dn.spoiled}</b> spoiled &middot; <b>${dn.priLogged}/${nPri}</b> ▲ logged`;
+}
+
+// ── Export: legacy FOH wall-hole block + dinner lines + demand signal ───────
+function openExport() {
+  const lines = [];
+  const dayName = currentDayForLog();
+  lines.push('PREDICTIVE PAR LOG — ' + fmtDateShort(logDate) + ', ' + parseISO(logDate).getFullYear());
+  lines.push('═'.repeat(30));
+
+  // ── FOH section: legacy wall-hole-log format (full roster, station order) ──
+  const fohData = readLogFor('FOH', logDate);
+  lines.push('');
+  lines.push('WALL HOLE LOG — ' + fmtDateShort(logDate));
+  lines.push('━'.repeat(26));
+  const fohSell = [];
+  for (const station of Object.keys(DATA.FOH.stations)) {
+    lines.push('');
+    lines.push(station.toUpperCase());
+    for (const item of DATA.FOH.stations[station]) {
+      const r = fohData[item];
+      if (r && r.time === 'np') {
+        lines.push('⛔ ' + item + ' — NOT PREPPED' + (r.spoil ? ' · ' + r.spoil + ' spoiled' : ''));
+      } else if (r && isHole(r)) {
+        lines.push('✅ ' + item + ' — ' + TIME_LABEL[r.time].toLowerCase() + (r.spoil ? ' · ' + r.spoil + ' spoiled' : ''));
+        fohSell.push({item, set:'FOH', cap: CAP[r.time], spoil: r.spoil || 0});
+      } else {
+        lines.push('⬜ ' + item + (r && r.spoil ? ' · ' + r.spoil + ' spoiled' : ''));
+      }
+    }
+  }
+  const f = logStats('FOH', logDate);
+  lines.push('');
+  lines.push('FOH: ' + f.holes + ' holes (' + f.sellouts + ' sellout · ' + f.np + ' not prepped) · ' + f.spoiled + ' spoiled');
+
+  // ── Dinner section: logged entries only (standalone-log format) ───────────
+  const dinData = readLogFor('Dinner', logDate);
+  const dinSell = [];
+  lines.push('');
+  lines.push('DINNER SET');
+  lines.push('━'.repeat(26));
+  let anyDin = false;
+  for (const station of Object.keys(DATA.Dinner.stations)) {
+    const rows = [];
+    for (const item of DATA.Dinner.stations[station]) {
+      const r = dinData[item];
+      if (!r || (r.time === undefined && r.spoil === undefined)) continue;
+      const star = DATA.Dinner.selloutSet.has(item) ? '▲ ' : '';
+      const sp = r.spoil ? r.spoil + ' spoiled' : '';
+      if (r.time === 'np') {
+        rows.push('  ⛔ ' + star + item + ': Not prepped' + (sp ? ' · ' + sp : ''));
+      } else {
+        const t = r.time ? TIME_LABEL[r.time] : '—';
+        rows.push('  ' + star + item + ': ' + t + (sp ? ' · ' + sp : ''));
+        if (r.time && r.time !== 'lasted') dinSell.push({item, set:'Dinner', cap: CAP[r.time], spoil: r.spoil || 0});
+      }
+    }
+    if (rows.length) { lines.push('', station.toUpperCase()); lines.push(...rows); anyDin = true; }
+  }
+  if (!anyDin) lines.push('(no entries)');
+  const dn = logStats('Dinner', logDate);
+  lines.push('');
+  lines.push('Dinner: ' + dn.holes + ' holes (' + dn.sellouts + ' sellout · ' + dn.np + ' not prepped) · ' + dn.spoiled + ' spoiled');
+
+  // ── Demand inference for every logged sellout (both sets) ────────────────
+  const sellLogged = [...fohSell, ...dinSell];
+  if (sellLogged.length) {
+    lines.push('');
+    lines.push('DEMAND SIGNAL (sellouts)');
+    lines.push('-'.repeat(30));
+    lines.push('true demand ≈ par ÷ capture-fraction');
+    for (const s of sellLogged) {
+      const par = getPar(s.set, s.item, dayName);
+      const pct = Math.round(s.cap * 100);
+      const mult = (1 / s.cap).toFixed(2);
+      const demand = Math.ceil(par / s.cap);
+      const star = DATA[s.set].selloutSet.has(s.item) ? '▲ ' : '';
+      const note = s.spoil > 0 ? '  ⚠ spoiled too — at/over ceiling' : '';
+      lines.push('  ' + star + s.item + ': par ' + par + ', sold out (~' + pct + '% capture) → demand ≈ ' + demand + ' (lift ×' + mult + ')' + note);
+    }
+    lines.push('');
+    lines.push('Rule: sold out + 0 spoils → lift again.');
+    lines.push('Sold out + spoils → at ceiling, hold.');
+    lines.push('Lasted + spoils → over par, trim.');
+    lines.push('Not prepped → no demand signal; production miss, exclude from par math.');
+  }
+
+  document.getElementById('exportText').textContent = lines.join('\n');
+  document.getElementById('modalBg').classList.add('show');
+}
+function closeModal() { document.getElementById('modalBg').classList.remove('show'); }
+function copyExport() {
+  const txt = document.getElementById('exportText').textContent;
+  navigator.clipboard?.writeText(txt).then(() => { toast('Copied to clipboard'); closeModal(); })
+    .catch(() => { toast('Copy failed — select manually'); });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ── Live stat chip (pars + prep modes) ──────────────────────────────────────
+function updateLiveChip() {
+  const chip = document.getElementById('liveStatChip');
+  if (!chip) return;
+  const d = DATA[curSet];
+
+  if (mode === 'prep') {
+    let short = 0, touched = 0;
+    for (const station of Object.keys(d.stations)) {
+      for (const item of d.stations[station]) {
+        const have = totalHave(item);
+        if (have === undefined) continue;
+        touched++;
+        if (have < getPar(curSet, item, currentDay)) short++;
+      }
+    }
+    if (short === 0 && touched > 0) { chip.textContent = '✓ all covered'; chip.classList.add('ok'); }
+    else if (short > 0) { chip.textContent = short + ' item' + (short === 1 ? '' : 's') + ' to make'; chip.classList.remove('ok'); }
+    else { chip.textContent = 'no counts yet'; chip.classList.remove('ok'); }
+  } else {
+    let flags = 0;
+    for (const items of Object.values(d.stations)) {
+      for (const item of items) {
+        if (d.flaggedSet.has(item) || d.nearzeroSet.has(item)) flags++;
+      }
+    }
+    chip.textContent = flags === 0 ? '✓ no flags' : flags + ' flagged item' + (flags === 1 ? '' : 's');
+    chip.classList.toggle('ok', flags === 0);
+  }
+}
+
+// ── Nav actions ─────────────────────────────────────────────────────────────
+function selectSet(set) {
+  if (set === curSet) return;
+  if (mode === 'prep') saveCounts();
+  curSet = set;
+  loadCounts();
+  if (mode === 'log') loadLog();
+  saveUI();
+  render();
+}
+function selectMode(m) {
+  if (m === mode) return;
+  if (mode === 'prep') saveCounts();
+  mode = m;
+  if (mode === 'prep') loadCounts();
+  if (mode === 'log')  loadLog();
+  saveUI();
+  render();
+}
+function selectDay(day) {
+  if (day === currentDay) return;
+  if (mode === 'prep') saveCounts();
+  currentDay = day;
+  loadCounts();
+  render();
+}
+function onDateChange() {
+  const v = document.getElementById('datePick').value;
+  if (!v) return;
+  logDate = v;
+  loadLog();
+  render();
+}
+function jumpToday() {
+  logDate = fmtDateISO(new Date());
+  document.getElementById('datePick').value = logDate;
+  loadLog();
+  render();
+}
+function clearCurrent() {
+  if (mode === 'prep') {
+    if (!confirm('Clear all ' + curSet + ' counts for ' + currentDay + '?')) return;
+    clearCounts();
+    render();
+  } else if (mode === 'log') {
+    if (!confirm('Clear the ' + curSet + ' log for ' + fmtDateShort(logDate) + '?')) return;
+    logData = {};
+    try { localStorage.removeItem(logKey(curSet, logDate)); } catch(e) {}
+    render();
+    toast('Cleared');
+  }
+}
+
+// ── Print: PREP ORDER for the current set + day ─────────────────────────────
+// Need-driven: qty = par − have (or full par if uncounted). Stocked items drop off.
+// Priority = wall coverage: have 0 → Critical · <⅓ par → High · <⅔ → Medium · else Low.
+// Uncounted = Medium (standard prep). ▲ sellout suspects bump one tier up.
+function printList() {
+  const set = curSet, d = DATA[set], day = currentDay;
+  const setLabel = set === 'FOH' ? 'FOH' : 'Dinner Set';
+  const di = DOW.indexOf(day);
+  const cov3 = [0, 1, 2].map(k => DOW_SHORT[(di + k) % 7]).join(' → ');
+
+  const tierOf = (item, par, have) => {
+    const sell = d.selloutSet.has(item);
+    if (have === undefined) return sell ? 1 : 2;
+    const r = par > 0 ? have / par : 1;
+    let t = r <= 0 ? 0 : r < 1 / 3 ? 1 : r < 2 / 3 ? 2 : 3;
+    if (sell && t > 0) t -= 1;
+    return t;
+  };
+
+  let cards = '', total = 0;
+  for (const stn of Object.keys(d.stations)) {
+    const entries = [];
+    for (const item of d.stations[stn]) {
+      const par = getPar(set, item, day);
+      const have = totalHave(item);
+      const n = have === undefined ? par : par - have;
+      if (n <= 0) continue;
+      entries.push({ item, n, t: tierOf(item, par, have) });
+    }
+    if (!entries.length) continue;
+    entries.sort((a, b) => a.t - b.t || b.n - a.n);
+    total += entries.length;
+    const rows = entries.map(e =>
+      `<div class="po-row"><span class="po-dot po-t${e.t}"></span><span class="po-nm">${esc(e.item)}</span><span class="po-qty">${e.n}</span></div>`
+    ).join('');
+    cards += `<div class="po-card"><div class="po-head">${esc(stn)}</div>${rows}</div>`;
+  }
+  if (!total) { toast('Wall is at par — nothing to prep'); return; }
+
+  document.getElementById('print-view').innerHTML = `
+    <div class="po-top">
+      <div class="po-title">PREP ORDER — BY STATION</div>
+      <div class="po-sub">${setLabel} &middot; ${day} &nbsp;|&nbsp; Covers ${cov3}</div>
+    </div>
+    <div class="po-cols">${cards}</div>
+    <div class="po-legend">
+      <span><span class="po-dot po-t0"></span>Critical (Need ASAP)</span>
+      <span><span class="po-dot po-t1"></span>High (Need Soon)</span>
+      <span><span class="po-dot po-t2"></span>Medium (Need Today)</span>
+      <span><span class="po-dot po-t3"></span>Low (Today Last Priority)</span>
+    </div>
+    <div class="po-brand">Predictive Par ${VERSION} &middot; Lazy Acres #1827 &middot; ${FRESH[set]}</div>
+  `;
+  requestAnimationFrame(() => { requestAnimationFrame(() => { window.print(); }); });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('#setSeg button').forEach(b => b.addEventListener('click', () => selectSet(b.dataset.set)));
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => selectMode(b.dataset.mode)));
+
+migrateLegacyLogs();
+loadUI();
+todayDay = detectToday();
+currentDay = todayDay;
+logDate = fmtDateISO(new Date());
+loadCounts();
+if (mode === 'log') loadLog();
+render();
+</script>
+
+</body>
+</html>
